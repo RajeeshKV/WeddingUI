@@ -12,7 +12,6 @@ import {
   approvePhoto, rejectPhoto, deletePhoto, bulkApprovePhotos,
   updateWeddingConfig, changePassword, getAdminWeddingConfig,
 } from '../../services/api/admin.js';
-import { getWeddingIdFromToken } from '../../stores/authStore.js';
 
 // ─────────────────────────────────────────────────────────────────
 // Shared primitives
@@ -62,23 +61,18 @@ const Pill = ({ status }) => {
 // Overview + RSVP summary
 // ─────────────────────────────────────────────────────────────────
 
-function Overview({ weddingId }) {
+function Overview() {
   const [stats,   setStats]   = useState(null);
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState('');
 
   const load = useCallback(() => {
-    if (!weddingId) {
-      setLoading(false);
-      setError('Wedding ID not found in session token. Please sign out and back in.');
-      return;
-    }
     setLoading(true); setError('');
-    getAdminDashboard(weddingId)
+    getAdminDashboard()
       .then(setStats)
       .catch(e => setError(e.message || 'Failed to load dashboard.'))
       .finally(() => setLoading(false));
-  }, [weddingId]);
+  }, []);
 
   useEffect(() => { load(); }, [load]);
 
@@ -86,7 +80,11 @@ function Overview({ weddingId }) {
   if (error)   return <ErrBox msg={error} />;
   if (!stats)  return null;
 
-  const totalGuests = (stats.attendingCount ?? 0) + (stats.maybeCount ?? 0);
+  // API returns: attending, notAttending, maybe (not attendingCount etc.)
+  const attending    = stats.attending    ?? stats.attendingCount    ?? 0;
+  const notAttending = stats.notAttending ?? stats.notAttendingCount ?? 0;
+  const maybe        = stats.maybe        ?? stats.maybeCount        ?? 0;
+  const totalGuests  = attending + maybe;
 
   return (
     <div>
@@ -144,10 +142,10 @@ function Overview({ weddingId }) {
           </div>
           <div style={{ display: 'flex', gap: 24 }}>
             {[
-              { label: 'Attending',    value: stats.attendingCount,    color: '#6EE7B7' },
-              { label: 'Maybe',        value: stats.maybeCount,        color: '#FCD34D' },
-              { label: 'Not Attending',value: stats.notAttendingCount, color: '#FCA5A5' },
-              { label: 'Total RSVPs',  value: stats.totalRsvps,        color: '#C4B5FD' },
+              { label: 'Attending',     value: attending,    color: '#6EE7B7' },
+              { label: 'Maybe',         value: maybe,        color: '#FCD34D' },
+              { label: 'Not Attending', value: notAttending, color: '#FCA5A5' },
+              { label: 'Total RSVPs',   value: stats.totalRsvps, color: '#C4B5FD' },
             ].map(({ label, value, color }) => (
               <div key={label} style={{ textAlign: 'center' }}>
                 <p style={{ fontSize: 26, fontWeight: 700, color,
@@ -169,9 +167,9 @@ function Overview({ weddingId }) {
           Response breakdown
         </p>
         {[
-          { label: 'Attending',     value: stats.attendingCount,    total: stats.totalRsvps, color: '#059669', Icon: UserCheck },
-          { label: 'Not Attending', value: stats.notAttendingCount, total: stats.totalRsvps, color: '#DC2626', Icon: UserX    },
-          { label: 'Maybe',         value: stats.maybeCount,        total: stats.totalRsvps, color: '#D97706', Icon: Clock    },
+          { label: 'Attending',     value: attending,    total: stats.totalRsvps, color: '#059669', Icon: UserCheck },
+          { label: 'Not Attending', value: notAttending, total: stats.totalRsvps, color: '#DC2626', Icon: UserX    },
+          { label: 'Maybe',         value: maybe,        total: stats.totalRsvps, color: '#D97706', Icon: Clock    },
         ].map(({ label, value, total, color, Icon }) => {
           const pct = total > 0 ? Math.round((value / total) * 100) : 0;
           return (
@@ -540,7 +538,7 @@ function PhotoModeration() {
 // Wedding Settings — loads current config from API first
 // ─────────────────────────────────────────────────────────────────
 
-function WeddingSettings({ weddingId }) {
+function WeddingSettings() {
   const [form, setForm] = useState({
     name: '', description: '', venue: '', eventDateUtc: '',
     heroImageUrl: '', rsvpEnabled: true, guestUploadsEnabled: true, autoApprovePhotos: false,
@@ -550,10 +548,9 @@ function WeddingSettings({ weddingId }) {
   const [msg,    setMsg]    = useState('');
   const [error,  setError]  = useState('');
 
-  // Load current config on mount via admin endpoint (authenticated)
+  // Load current config on mount via admin endpoint (tenant from JWT)
   useEffect(() => {
-    if (!weddingId) { setLoadingConfig(false); return; }
-    getAdminWeddingConfig(weddingId)
+    getAdminWeddingConfig()
       .then(cfg => {
         setForm({
           name:                cfg.name               ?? '',
@@ -574,10 +571,8 @@ function WeddingSettings({ weddingId }) {
 
   const save = async (e) => {
     e.preventDefault();
-    if (!weddingId) { setError('Wedding ID not available.'); return; }
     setSaving(true); setMsg(''); setError('');
     try {
-      // Only include fields that have values (nullable fields in spec)
       const payload = {};
       if (form.name)         payload.name         = form.name;
       if (form.description)  payload.description  = form.description;
@@ -587,8 +582,7 @@ function WeddingSettings({ weddingId }) {
       payload.rsvpEnabled         = form.rsvpEnabled;
       payload.guestUploadsEnabled = form.guestUploadsEnabled;
       payload.autoApprovePhotos   = form.autoApprovePhotos;
-
-      await updateWeddingConfig(weddingId, payload);
+      await updateWeddingConfig(payload);
       setMsg('Settings saved successfully.');
     } catch (err) {
       setError(err.message || 'Update failed.');
@@ -596,13 +590,6 @@ function WeddingSettings({ weddingId }) {
       setSaving(false);
     }
   };
-
-  if (!weddingId) return (
-    <div>
-      <h2 style={H2}>Wedding Settings</h2>
-      <ErrBox msg="Wedding ID not found in session token. Please sign out and back in." />
-    </div>
-  );
 
   if (loadingConfig) return (
     <div>
@@ -783,7 +770,6 @@ const NAV_ITEMS = [
 ];
 
 export function AdminDashboard({ me, mustChange, onMustChangeResolved, onLogout, page, setPage }) {
-  const [weddingId] = useState(() => getWeddingIdFromToken());
 
   if (mustChange) {
     return (
@@ -861,9 +847,9 @@ export function AdminDashboard({ me, mustChange, onMustChangeResolved, onLogout,
           <motion.div key={page}
             initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }} transition={{ duration: 0.22 }}>
-            {page === 'dashboard' && <Overview   weddingId={weddingId} />}
+            {page === 'dashboard' && <Overview />}
             {page === 'photos'    && <PhotoModeration />}
-            {page === 'settings'  && <WeddingSettings weddingId={weddingId} />}
+            {page === 'settings'  && <WeddingSettings />}
             {page === 'password'  && <ChangePassword />}
           </motion.div>
         </AnimatePresence>

@@ -113,15 +113,15 @@ function FrontendUrls({ adminId }) {
               padding: '9px 12px', borderRadius: 4,
               background: 'rgba(255,255,255,0.04)',
               border: '1px solid rgba(255,255,255,0.06)',
-              opacity: u.isEnabled === false ? 0.5 : 1,
+              opacity: u.isActive === false ? 0.5 : 1,
             }}>
               <span style={{ flex: 1, fontSize: 12, color: '#D4B88A', wordBreak: 'break-all' }}>
                 {u.url}
               </span>
               <CopyButton text={u.url} />
-              <button onClick={() => toggle(u.id)} disabled={busy} title={u.isEnabled ? 'Disable' : 'Enable'}
+              <button onClick={() => toggle(u.id)} disabled={busy} title={u.isActive ? 'Disable' : 'Enable'}
                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#7A6A50', padding: 4 }}>
-                {u.isEnabled !== false ? <ToggleRight size={18} color="#C9A84C" /> : <ToggleLeft size={18} />}
+                {u.isActive !== false ? <ToggleRight size={18} color="#C9A84C" /> : <ToggleLeft size={18} />}
               </button>
               <button onClick={() => remove(u.id)} disabled={busy} title="Remove URL"
                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#7A6A50', padding: 4 }}
@@ -142,7 +142,7 @@ function AdminRow({ admin }) {
   const [slugCopied, setSlugCopied] = useState(false);
 
   const copySlug = () => {
-    navigator.clipboard.writeText(admin.defaultWeddingSlug).then(() => {
+    navigator.clipboard.writeText(admin.slug).then(() => {
       setSlugCopied(true);
       setTimeout(() => setSlugCopied(false), 1800);
     });
@@ -199,7 +199,7 @@ function AdminRow({ admin }) {
                 </p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <code style={{ flex: 1, fontSize: 12, color: '#C9A84C', wordBreak: 'break-all' }}>
-                    {admin.defaultWeddingSlug}
+                    {admin.slug}
                   </code>
                   <button onClick={copySlug}
                     style={{ background: 'none', border: 'none', cursor: 'pointer',

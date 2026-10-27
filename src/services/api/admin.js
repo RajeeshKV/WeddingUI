@@ -1,7 +1,8 @@
 /**
- * Admin API service — routes strictly matching the OpenAPI spec.
- * All authenticated endpoints under /api/v1/admin/
- * Role: 'admin'
+ * Admin API service
+ * Updated to match backend spec — all tenant-scoped from JWT, no weddingId in URLs.
+ * New canonical endpoints: /api/v1/admin/wedding/*
+ * Legacy /api/v1/admin/weddings/{id}/* still work but are not used here.
  */
 
 import api from './client.js';
@@ -16,7 +17,8 @@ export async function adminLogin({ usernameOrEmail, password }) {
   const data = await api.post(base('/auth/login'), { usernameOrEmail, password });
   setTokens(ROLE, { accessToken: data.accessToken, refreshToken: data.refreshToken });
   notifyAuthChange();
-  return data;
+  return data; // { accessToken, refreshToken, expiresIn }
+  // JWT contains: role, tenantId (= AdminUser.Id), email, name, security_version
 }
 
 export async function adminLogout(refreshToken) {
@@ -37,6 +39,8 @@ export async function adminLogoutAll() {
   }
 }
 
+// GET /api/v1/admin/auth/me
+// Returns: { id, fullName, username, email, mustChangePassword, isActive }
 export function getAdminMe() {
   return api.get(base('/auth/me'), { role: ROLE });
 }
@@ -58,59 +62,67 @@ export function resetPassword({ email, otp, newPassword }) {
 }
 
 // ── Dashboard ─────────────────────────────────────────────────────
-// GET /api/v1/admin/weddings/{weddingId}/dashboard
-export function getAdminDashboard(weddingId) {
-  return api.get(base(`/weddings/${weddingId}/dashboard`), { role: ROLE });
+// GET /api/v1/admin/wedding/dashboard  (tenant resolved from JWT)
+// Returns: { totalRsvps, attending, notAttending, maybe,
+//            totalPhotos, pendingPhotos, approvedPhotos }
+export function getAdminDashboard() {
+  return api.get(base('/wedding/dashboard'), { role: ROLE });
 }
 
 // ── Wedding config ────────────────────────────────────────────────
-// GET /api/v1/admin/weddings/{weddingId}/config
-export function getAdminWeddingConfig(weddingId) {
-  return api.get(base(`/weddings/${weddingId}/config`), { role: ROLE });
+// GET /api/v1/admin/wedding/config
+// Returns: { weddingId, name, slug, eventDateUtc, venue, description,
+//            heroImageUrl, rsvpEnabled, guestUploadsEnabled }
+export function getAdminWeddingConfig() {
+  return api.get(base('/wedding/config'), { role: ROLE });
 }
 
-// PUT /api/v1/admin/weddings/{weddingId}/config
-export function updateWeddingConfig(weddingId, config) {
-  return api.put(base(`/weddings/${weddingId}/config`), config, { role: ROLE });
+// PUT /api/v1/admin/wedding/config
+// Body: { name?, description?, venue?, eventDateUtc?, heroImageUrl?,
+//         rsvpEnabled?, guestUploadsEnabled?, autoApprovePhotos? }
+export function updateWeddingConfig(config) {
+  return api.put(base('/wedding/config'), config, { role: ROLE });
+}
+
+// POST /api/v1/admin/wedding/photos/auto-approve
+export function enableAutoApprove() {
+  return api.post(base('/wedding/photos/auto-approve'), null, { role: ROLE });
 }
 
 // ── Photos ────────────────────────────────────────────────────────
-// GET /api/v1/admin/photos — all photos across admin's weddings
+// GET /api/v1/admin/wedding/photos — all photos for tenant's wedding
+// Returns: [{ id, imageUrl, thumbnailUrl, uploadedByName, caption,
+//             status: "Pending|Approved|Rejected", uploadedAtUtc, weddingId }]
+export function getWeddingPhotos() {
+  return api.get(base('/wedding/photos'), { role: ROLE });
+}
+
+// GET /api/v1/admin/photos — all photos across tenant's weddings
 export function getAllAdminPhotos() {
   return api.get(base('/photos'), { role: ROLE });
 }
 
-// GET /api/v1/admin/photos/pending — pending only
+// GET /api/v1/admin/photos/pending
 export function getPendingPhotos() {
   return api.get(base('/photos/pending'), { role: ROLE });
 }
 
-// GET /api/v1/admin/weddings/{weddingId}/photos — all photos for one wedding
-export function getWeddingPhotos(weddingId) {
-  return api.get(base(`/weddings/${weddingId}/photos`), { role: ROLE });
-}
-
-// POST /api/v1/admin/photos/{photoId}/approve
+// POST /api/v1/admin/photos/{photoId}/approve  → 204
 export function approvePhoto(photoId) {
   return api.post(base(`/photos/${photoId}/approve`), null, { role: ROLE });
 }
 
-// POST /api/v1/admin/photos/{photoId}/reject
+// POST /api/v1/admin/photos/{photoId}/reject  → 204
 export function rejectPhoto(photoId) {
   return api.post(base(`/photos/${photoId}/reject`), null, { role: ROLE });
 }
 
-// DELETE /api/v1/admin/photos/{photoId}
+// DELETE /api/v1/admin/photos/{photoId}  → 204
 export function deletePhoto(photoId) {
   return api.delete(base(`/photos/${photoId}`), { role: ROLE });
 }
 
-// POST /api/v1/admin/photos/bulk-approve  body: string[] (UUID array)
+// POST /api/v1/admin/photos/bulk-approve  body: string[] (UUID[])  → 204
 export function bulkApprovePhotos(photoIds) {
   return api.post(base('/photos/bulk-approve'), photoIds, { role: ROLE });
-}
-
-// POST /api/v1/admin/weddings/{weddingId}/photos/auto-approve
-export function enableAutoApprove(weddingId) {
-  return api.post(base(`/weddings/${weddingId}/photos/auto-approve`), null, { role: ROLE });
 }

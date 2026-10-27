@@ -2,7 +2,14 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { AmbientCanvas } from '../components/background/AmbientCanvas.jsx';
 
-export function SiteFooter() {
+export function SiteFooter({ weddingConfig = null }) {
+  const name    = weddingConfig?.name || 'Aarav & Siya';
+  const dateStr = weddingConfig?.eventDateUtc
+    ? new Date(weddingConfig.eventDateUtc).toLocaleDateString('en-IN', {
+        day: 'numeric', month: '2-digit', year: 'numeric',
+      }).replace(/\//g, ' · ')
+    : '17 · 02 · 2027';
+  const location = weddingConfig?.venue?.split(',')[0] || 'Bangalore, India';
   return (
     <footer
       className="site-footer"
@@ -39,7 +46,11 @@ export function SiteFooter() {
           viewport={{ once: true }}
           transition={{ delay: 0.2, duration: 0.9, ease: [0.2, 0.8, 0.2, 1] }}
         >
-          Aarav <em>&amp;</em> Siya
+          {name.includes('&') ? (
+            <>
+              {name.split('&')[0].trim()} <em>&amp;</em> {name.split('&')[1]?.trim()}
+            </>
+          ) : name}
         </motion.h2>
 
         <motion.p
@@ -48,7 +59,7 @@ export function SiteFooter() {
           viewport={{ once: true }}
           transition={{ delay: 0.35, duration: 0.7 }}
         >
-          17 · 02 · 2027 &nbsp;·&nbsp; Bangalore, India
+          {dateStr} &nbsp;·&nbsp; {location}
         </motion.p>
 
         <div className="footer-rule" aria-hidden="true" />

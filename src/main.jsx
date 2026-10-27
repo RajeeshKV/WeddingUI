@@ -12,7 +12,7 @@ import './tailwind.css';
 import './styles.css';
 
 // Layout
-import { Nav }           from './components/layout/Nav.jsx';
+import { Nav }             from './components/layout/Nav.jsx';
 import { IntroDispatcher } from './components/intro/IntroDispatcher.jsx';
 
 // Sections
@@ -26,11 +26,18 @@ import { Travel }        from './features/Travel.jsx';
 import { SiteFooter }    from './features/SiteFooter.jsx';
 import { GalleryPage }   from './features/GalleryPage.jsx';
 import { ThemeLauncher } from './features/ThemeLauncher.jsx';
+import { AdminApp }      from './features/admin/AdminApp.jsx';
+import { SuApp }         from './features/su/SuApp.jsx';
+
+// Public data hook
+import { useWeddingData } from './hooks/useWeddingData.js';
 
 /* ─── helpers ─────────────────────────────────────────────── */
-function getCountdown() {
-  const target = new Date('2027-02-17T09:00:00+05:30').getTime();
-  const diff   = Math.max(0, target - Date.now());
+function getCountdown(eventDateUtc) {
+  const target = eventDateUtc
+    ? new Date(eventDateUtc).getTime()
+    : new Date('2027-02-17T09:00:00+05:30').getTime();
+  const diff = Math.max(0, target - Date.now());
   return {
     days:    Math.floor(diff / 86400000),
     hours:   Math.floor(diff / 3600000)  % 24,
@@ -39,25 +46,19 @@ function getCountdown() {
   };
 }
 
-/* ─── Site configuration (from .env) ──────────────────────── */
-// VITE_SITE_MODE: "launcher" (default) | "wedding"
-// VITE_DEFAULT_THEME: any theme ID from registry.js
+/* ─── Site configuration ───────────────────────────────────── */
 const SITE_MODE     = import.meta.env.VITE_SITE_MODE     || 'launcher';
 const DEFAULT_THEME = import.meta.env.VITE_DEFAULT_THEME || 'eternal-bloom';
 
 /* ─── Router ───────────────────────────────────────────────── */
-// /gallery          → GalleryPage  (always)
-// /  + ?theme=xxx   → MainSite with that theme  (always)
-// /  + no ?theme    → launcher mode  → ThemeLauncher
-//                  → wedding mode   → MainSite with DEFAULT_THEME
 function getRoute() {
   const path  = window.location.pathname.replace(/\/$/, '');
   const theme = new URLSearchParams(window.location.search).get('theme');
 
   if (path === '/gallery') return { route: 'gallery' };
+  if (path === '/admin')   return { route: 'admin' };
+  if (path === '/su')      return { route: 'su' };
   if (theme)               return { route: 'site', themeId: theme };
-
-  // No ?theme param — decide by mode
   if (SITE_MODE === 'wedding') return { route: 'site', themeId: DEFAULT_THEME };
   return { route: 'launcher' };
 }
@@ -65,20 +66,24 @@ function getRoute() {
 /* ─── Main Site ────────────────────────────────────────────── */
 function MainSite({ initialThemeId = DEFAULT_THEME }) {
   const themeId = new URLSearchParams(window.location.search).get('theme') || initialThemeId;
-  const theme   = getTheme(themeId);
 
-  // Coming from launcher always shows intro fresh
-  const [introVisible, setIntroVisible] = useState(true);
-  const [showTop,  setShowTop]  = useState(false);
-  const [uploads,  setUploads]  = useState([]);
-  const [timeLeft, setTimeLeft] = useState(getCountdown);
+  const [introVisible,  setIntroVisible]  = useState(true);
+  const [showTop,       setShowTop]       = useState(false);
   const [activeThemeId, setActiveThemeId] = useState(themeId);
+  const [timeLeft,      setTimeLeft]      = useState(() => getCountdown(null));
+
   const activeTheme = getTheme(activeThemeId);
 
+  // Fetch wedding data from API
+  const { config, events, gallery, loading: dataLoading } = useWeddingData();
+
+  // Countdown — use API event date when available
   useEffect(() => {
-    const id = setInterval(() => setTimeLeft(getCountdown()), 1000);
+    const tick = () => setTimeLeft(getCountdown(config?.eventDateUtc));
+    tick();
+    const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, []);
+  }, [config?.eventDateUtc]);
 
   useEffect(() => {
     const onScroll = () => setShowTop(window.scrollY > 500);
@@ -91,27 +96,17 @@ function MainSite({ initialThemeId = DEFAULT_THEME }) {
     return () => { document.body.style.overflow = ''; };
   }, [introVisible]);
 
-  const handleIntroOpen = useCallback(() => setIntroVisible(false), []);
+  const handleIntroOpen    = useCallback(() => setIntroVisible(false), []);
+  const handleReplayIntro  = useCallback(() => setIntroVisible(true), []);
 
-  const handleReplayIntro = useCallback(() => setIntroVisible(true), []);
-
-  const handleThemeSelect = useCallback((id) => {
+  const handleThemeSelect  = useCallback((id) => {
     setThemeInURL(id);
     setActiveThemeId(id);
-    setIntroVisible(true); // re-show intro on theme switch
+    setIntroVisible(true);
   }, []);
 
   const scrollTo = useCallback((id) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
-  }, []);
-
-  const handleUpload = useCallback((e) => {
-    const files = [...e.target.files]
-      .filter(f => f.type.startsWith('image/'))
-      .slice(0, 8);
-    setUploads(prev =>
-      [...prev, ...files.map(f => ({ file: f, url: URL.createObjectURL(f) }))].slice(0, 12)
-    );
   }, []);
 
   return (
@@ -130,18 +125,17 @@ function MainSite({ initialThemeId = DEFAULT_THEME }) {
       />
 
       <main id="main-content">
-        <Hero     timeLeft={timeLeft} onScrollTo={scrollTo} />
-        <Welcome  />
-        <Story    />
-        <Events   onScrollTo={scrollTo} />
-        <Gallery  uploads={uploads} onUpload={handleUpload} />
-        <RSVP     />
-        <Travel   />
+        <Hero       timeLeft={timeLeft} onScrollTo={scrollTo} weddingConfig={config} />
+        <Welcome    />
+        <Story      />
+        <Events     apiEvents={events}   onScrollTo={scrollTo} />
+        <Gallery    apiPhotos={gallery}  weddingConfig={config} />
+        <RSVP       weddingConfig={config} />
+        <Travel     weddingConfig={config} />
       </main>
 
-      <SiteFooter />
+      <SiteFooter weddingConfig={config} />
 
-      {/* Floating back-to-top — icon only */}
       <AnimatePresence>
         {showTop && (
           <motion.button
@@ -166,7 +160,9 @@ function MainSite({ initialThemeId = DEFAULT_THEME }) {
 /* ─── App router ───────────────────────────────────────────── */
 function App() {
   const { route, themeId } = getRoute();
-  if (route === 'gallery')  return <GalleryPage />;
+  if (route === 'gallery') return <GalleryPage />;
+  if (route === 'admin')   return <AdminApp />;
+  if (route === 'su')      return <SuApp />;
   if (route === 'launcher') return <ThemeLauncher />;
   return <MainSite initialThemeId={themeId} />;
 }

@@ -5,7 +5,15 @@ import { AmbientCanvas } from '../components/background/AmbientCanvas.jsx';
 
 const heroPhoto = 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=2200&q=90';
 
-export function Hero({ timeLeft, onScrollTo }) {
+export function Hero({ timeLeft, onScrollTo, weddingConfig = null }) {
+  // Extract couple names from API config if available
+  // Expected format: "Rahul & Priya Wedding" → ["Rahul", "Priya"]
+  let name1 = 'Aarav', name2 = 'Siya';
+  if (weddingConfig?.name) {
+    const match = weddingConfig.name.match(/^(.+?)\s*&\s*(.+?)(?:\s+Wedding)?$/i);
+    if (match) { name1 = match[1].trim(); name2 = match[2].trim(); }
+  }
+
   return (
     <section className="hero" id="home" aria-label="Hero – Aarav and Siya's wedding">
       {/* Background image */}
@@ -42,8 +50,8 @@ export function Hero({ timeLeft, onScrollTo }) {
           animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
           transition={{ delay: 0.55, duration: 1.0, ease: [0.2, 0.8, 0.2, 1] }}
         >
-          Aarav <em>&amp;</em>
-          <br />Siya
+          {name1} <em>&amp;</em>
+          <br />{name2}
         </motion.h1>
 
         <motion.div
@@ -99,7 +107,14 @@ export function Hero({ timeLeft, onScrollTo }) {
           animate={{ opacity: 1 }}
           transition={{ delay: 1.35, duration: 0.8 }}
         >
-          17 FEBRUARY 2027 <span aria-hidden="true">·</span> BANGALORE, INDIA
+          {weddingConfig?.eventDateUtc
+            ? new Date(weddingConfig.eventDateUtc).toLocaleDateString('en-IN', {
+                day: 'numeric', month: 'long', year: 'numeric',
+              }).toUpperCase()
+            : '17 FEBRUARY 2027'
+          }
+          <span aria-hidden="true"> · </span>
+          {weddingConfig?.venue?.split(',').pop()?.trim().toUpperCase() || 'BANGALORE, INDIA'}
         </motion.p>
       </motion.div>
 

@@ -1,39 +1,85 @@
 /**
  * authStore.js
  *
- * In-memory token storage for Admin and Super User sessions.
- * Access tokens are NEVER written to localStorage.
- * Refresh tokens are stored in sessionStorage as the safest
- * browser-accessible option (cleared on tab close, not readable
- * by service workers or other origins).
+ * Token storage for Admin and SU sessions.
  *
- * Two separate namespaces: "admin" and "su" — they never share tokens.
+ * Storage strategy (per your instruction):
+ *   accessToken  → localStorage  (survives page refresh)
+ *   refreshToken → localStorage  (survives page refresh, used for silent re-auth)
+ *
+ * On every page load, initFromStorage(role) restores the saved tokens and
+ * kicks off a silent refresh so a fresh access token is ready immediately.
+ *
+ * Two namespaces: "admin" and "su" — they never share storage keys.
  */
 
-const REFRESH_KEYS = {
-  admin: 'wedding_admin_refresh',
-  su:    'wedding_su_refresh',
+const KEYS = {
+  admin: { access: 'w_admin_at', refresh: 'w_admin_rt' },
+  su:    { access: 'w_su_at',    refresh: 'w_su_rt'    },
 };
 
-// In-memory access tokens — wiped on page refresh (intentional).
-const _access = { admin: null, su: null };
+// In-memory copy of the current access token for fast synchronous reads
+const _mem = { admin: null, su: null };
+
+// ── JWT helpers ───────────────────────────────────────────────────
+
+/**
+ * Decode a JWT payload without verifying the signature.
+ * Only used to read non-sensitive claims (tenantId, exp, etc.).
+ */
+export function decodeJwt(token) {
+  try {
+    const payload = token.split('.')[1];
+    const json = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+    return JSON.parse(json);
+  } catch {
+    return null;
+  }
+}
+
+/** Return true if token is expired or expires within the next 30 seconds */
+export function isTokenExpired(token) {
+  const claims = decodeJwt(token);
+  if (!claims?.exp) return true;
+  return Date.now() / 1000 > claims.exp - 30;
+}
+
+/** Extract the weddingId (tenantId claim) from the stored admin access token */
+export function getWeddingIdFromToken() {
+  const token = _mem.admin || ls('get', KEYS.admin.access);
+  if (!token) return null;
+  const claims = decodeJwt(token);
+  // Backend may use "tenantId", "weddingId", or "sub" depending on implementation
+  return claims?.tenantId ?? claims?.weddingId ?? claims?.defaultWeddingId ?? null;
+}
+
+// ── localStorage helpers ──────────────────────────────────────────
+
+function ls(op, key, value) {
+  try {
+    if (op === 'get')    return localStorage.getItem(key);
+    if (op === 'set')    localStorage.setItem(key, value);
+    if (op === 'remove') localStorage.removeItem(key);
+  } catch { /* storage blocked in some privacy modes */ }
+  return null;
+}
 
 // ── Setters ───────────────────────────────────────────────────────
 
 export function setTokens(role, { accessToken, refreshToken }) {
-  _access[role] = accessToken;
+  if (accessToken) {
+    _mem[role] = accessToken;
+    ls('set', KEYS[role].access, accessToken);
+  }
   if (refreshToken) {
-    try {
-      sessionStorage.setItem(REFRESH_KEYS[role], refreshToken);
-    } catch {
-      // sessionStorage blocked (private mode edge cases) — fail silently
-    }
+    ls('set', KEYS[role].refresh, refreshToken);
   }
 }
 
 export function clearTokens(role) {
-  _access[role] = null;
-  try { sessionStorage.removeItem(REFRESH_KEYS[role]); } catch { /* */ }
+  _mem[role] = null;
+  ls('remove', KEYS[role].access);
+  ls('remove', KEYS[role].refresh);
 }
 
 export function clearAllTokens() {
@@ -44,15 +90,28 @@ export function clearAllTokens() {
 // ── Getters ───────────────────────────────────────────────────────
 
 export function getAccessToken(role) {
-  return _access[role];
+  // Prefer in-memory, fall back to localStorage
+  return _mem[role] || ls('get', KEYS[role].access) || null;
 }
 
 export function getRefreshToken(role) {
-  try { return sessionStorage.getItem(REFRESH_KEYS[role]); } catch { return null; }
+  return ls('get', KEYS[role].refresh) || null;
 }
 
 export function isAuthenticated(role) {
-  return Boolean(_access[role]);
+  const token = getAccessToken(role);
+  return Boolean(token && !isTokenExpired(token));
+}
+
+/**
+ * Restore tokens from localStorage into memory on page load.
+ * Returns true if a (possibly expired) access token was found,
+ * so the caller knows to attempt a silent refresh.
+ */
+export function initFromStorage(role) {
+  const at = ls('get', KEYS[role].access);
+  if (at) { _mem[role] = at; return true; }
+  return false;
 }
 
 // ── Listeners — notify UI when auth state changes ─────────────────

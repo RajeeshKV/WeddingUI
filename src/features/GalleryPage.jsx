@@ -1,134 +1,415 @@
-import React, { useState } from 'react';
+/**
+ * GalleryPage — /gallery
+ *
+ * Dynamic masonry layout (Pinterest/Google Images style).
+ * Photos sourced exclusively from the API public gallery endpoint.
+ * No placeholder images. Shows loading skeleton, empty state, error state.
+ */
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ArrowUpRight } from 'lucide-react';
+import { X, ArrowUpRight, Loader2, ImageOff, RefreshCw } from 'lucide-react';
+import { getPublicGallery, getWeddingConfig } from '../services/api/public.js';
 
-const ALL_PHOTOS = [
-  { src: 'https://images.unsplash.com/photo-1532712938310-34cb3982ef74?auto=format&fit=crop&w=900&q=85', alt: 'Wedding memory 1',   cat: 'All' },
-  { src: 'https://images.unsplash.com/photo-1537633552985-df8429e8048b?auto=format&fit=crop&w=900&q=85', alt: 'Pre-wedding shoot',   cat: 'Pre-Wedding' },
-  { src: 'https://images.unsplash.com/photo-1523438885200-e635ba2c371e?auto=format&fit=crop&w=900&q=85', alt: 'Wedding detail',       cat: 'Candid' },
-  { src: 'https://images.unsplash.com/photo-1529636798458-92182e662485?auto=format&fit=crop&w=900&q=85', alt: 'Wedding ceremony',     cat: 'All' },
-  { src: 'https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=900&q=85', alt: 'Romantic portrait',    cat: 'Pre-Wedding' },
-  { src: 'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?auto=format&fit=crop&w=900&q=85', alt: 'Celebration moment',   cat: 'Candid' },
-  { src: 'https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&w=900&q=85', alt: 'Haldi ceremony',       cat: 'All' },
-  { src: 'https://images.unsplash.com/photo-1519225421980-888cb7e6c7c2?auto=format&fit=crop&w=900&q=85', alt: 'Sangeet celebration',  cat: 'Friends & Family' },
-  { src: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=900&q=85', alt: 'Wedding venue',        cat: 'Travel' },
-];
+const SLUG = import.meta.env.VITE_WEDDING_SLUG || '';
 
-const TABS = ['All', 'Pre-Wedding', 'Travel', 'Candid', 'Friends & Family'];
+// ── Masonry layout engine ─────────────────────────────────────────
+// Distributes photos into N columns by shortest column height.
+// Each photo is given a natural aspect ratio; images are left to fill their width.
+function buildColumns(photos, columnCount) {
+  const cols = Array.from({ length: columnCount }, () => []);
+  const heights = new Array(columnCount).fill(0);
+  photos.forEach((photo, i) => {
+    const ratio = photo._ratio || 0.75; // default 4:3
+    const shortest = heights.indexOf(Math.min(...heights));
+    cols[shortest].push({ ...photo, _ratio: ratio });
+    heights[shortest] += ratio;
+  });
+  return cols;
+}
 
-export function GalleryPage() {
-  const [activeTab, setActiveTab] = useState('All');
-  const [lightbox, setLightbox] = useState(null);
+function useColumnCount() {
+  const [cols, setCols] = useState(() =>
+    window.innerWidth < 640 ? 2 : window.innerWidth < 1024 ? 3 : 4
+  );
+  useEffect(() => {
+    const update = () => {
+      setCols(window.innerWidth < 640 ? 2 : window.innerWidth < 1024 ? 3 : 4);
+    };
+    window.addEventListener('resize', update, { passive: true });
+    return () => window.removeEventListener('resize', update);
+  }, []);
+  return cols;
+}
 
-  const filtered = activeTab === 'All'
-    ? ALL_PHOTOS
-    : ALL_PHOTOS.filter(p => p.cat === activeTab || p.cat === 'All');
+// ── Skeleton card ─────────────────────────────────────────────────
+function SkeletonCard({ ratio = 0.75 }) {
+  return (
+    <div style={{
+      width: '100%',
+      paddingBottom: `${ratio * 100}%`,
+      background: 'linear-gradient(90deg, #f0ece8 25%, #e4ddd8 50%, #f0ece8 75%)',
+      backgroundSize: '200% 100%',
+      borderRadius: 6,
+      animation: 'shimmer 1.5s ease-in-out infinite',
+    }} aria-hidden="true" />
+  );
+}
+
+// ── Lightbox ──────────────────────────────────────────────────────
+function Lightbox({ photo, onClose }) {
+  useEffect(() => {
+    const handler = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [onClose]);
 
   return (
-    <div className="gallery-page theme-eternal-bloom">
-      {/* Nav */}
-      <header className="site-nav gallery-page-nav" role="banner">
-        <a className="nav-monogram" href="/" aria-label="Return home">
-          A<span>&amp;</span>S
+    <motion.div
+      role="dialog"
+      aria-modal="true"
+      aria-label={photo.uploadedByName ? `Photo by ${photo.uploadedByName}` : 'Wedding photo'}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.22 }}
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 200,
+        background: 'rgba(8,6,5,0.92)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '20px',
+        backdropFilter: 'blur(6px)',
+      }}
+    >
+      <button
+        onClick={onClose}
+        aria-label="Close"
+        style={{
+          position: 'fixed', top: 16, right: 16,
+          width: 40, height: 40, borderRadius: '50%',
+          background: 'rgba(255,255,255,0.1)',
+          border: '1px solid rgba(255,255,255,0.2)',
+          color: '#fff', cursor: 'pointer', zIndex: 201,
+          display: 'grid', placeItems: 'center',
+        }}
+      >
+        <X size={18} />
+      </button>
+
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.3, ease: [0.2, 0.8, 0.2, 1] }}
+        onClick={e => e.stopPropagation()}
+        style={{ maxWidth: 'min(1000px,95vw)', textAlign: 'center' }}
+      >
+        <img
+          src={photo.imageUrl}
+          alt={photo.uploadedByName ? `Photo by ${photo.uploadedByName}` : 'Wedding photo'}
+          style={{
+            maxHeight: '85vh', maxWidth: '100%',
+            objectFit: 'contain', borderRadius: 4,
+            boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
+          }}
+        />
+        {(photo.uploadedByName || photo.caption) && (
+          <p style={{
+            color: 'rgba(255,255,255,0.6)', fontSize: 12,
+            marginTop: 12, letterSpacing: '0.06em',
+          }}>
+            {photo.caption || `Shared by ${photo.uploadedByName}`}
+          </p>
+        )}
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// ── Photo card ────────────────────────────────────────────────────
+function PhotoCard({ photo, onOpen, index }) {
+  const [loaded, setLoaded] = useState(false);
+
+  return (
+    <motion.button
+      onClick={() => onOpen(photo)}
+      aria-label={photo.uploadedByName ? `View photo by ${photo.uploadedByName}` : `View photo ${index + 1}`}
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: Math.min(index * 0.04, 0.4), duration: 0.45 }}
+      whileHover={{ scale: 1.015 }}
+      style={{
+        position: 'relative', width: '100%',
+        display: 'block', background: 'none', border: 'none',
+        padding: 0, cursor: 'pointer', borderRadius: 6, overflow: 'hidden',
+        marginBottom: 0,
+      }}
+    >
+      {/* Skeleton until image loads */}
+      {!loaded && (
+        <div style={{
+          width: '100%',
+          paddingBottom: `${(photo._ratio || 0.75) * 100}%`,
+          background: '#EDE8E2',
+          borderRadius: 6,
+        }} aria-hidden="true" />
+      )}
+      <img
+        src={photo.thumbnailUrl || photo.imageUrl}
+        alt={photo.uploadedByName ? `Photo by ${photo.uploadedByName}` : `Wedding photo ${index + 1}`}
+        loading="lazy"
+        onLoad={() => setLoaded(true)}
+        style={{
+          width: '100%',
+          display: loaded ? 'block' : 'none',
+          borderRadius: 6,
+          verticalAlign: 'bottom',
+        }}
+      />
+      {/* Hover overlay */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        background: 'linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 50%)',
+        borderRadius: 6,
+        opacity: 0,
+        transition: 'opacity 0.25s',
+        pointerEvents: 'none',
+      }} className="photo-overlay" />
+      {photo.uploadedByName && (
+        <div style={{
+          position: 'absolute', bottom: 8, left: 10, right: 10,
+          color: 'rgba(255,255,255,0.9)', fontSize: 10,
+          letterSpacing: '0.06em', textAlign: 'left',
+          pointerEvents: 'none',
+          opacity: 0, transition: 'opacity 0.25s',
+        }} className="photo-caption">
+          {photo.uploadedByName}
+        </div>
+      )}
+      <style>{`
+        button:hover .photo-overlay { opacity: 1 !important; }
+        button:hover .photo-caption { opacity: 1 !important; }
+      `}</style>
+    </motion.button>
+  );
+}
+
+// ── Main page ─────────────────────────────────────────────────────
+export function GalleryPage() {
+  const [photos,   setPhotos]  = useState([]);
+  const [config,   setConfig]  = useState(null);
+  const [loading,  setLoading] = useState(true);
+  const [error,    setError]   = useState('');
+  const [lightbox, setLightbox] = useState(null);
+  const columnCount = useColumnCount();
+
+  const load = useCallback(async () => {
+    if (!SLUG) {
+      setLoading(false);
+      setError('No wedding slug configured (VITE_WEDDING_SLUG). Gallery is not available.');
+      return;
+    }
+    setLoading(true); setError('');
+    try {
+      const [gallery, cfg] = await Promise.allSettled([
+        getPublicGallery(),
+        getWeddingConfig(),
+      ]);
+
+      const photos = gallery.status === 'fulfilled' ? gallery.value : [];
+      if (cfg.status === 'fulfilled') setConfig(cfg.value);
+
+      // Assign a random plausible aspect ratio per photo
+      // (we don't have dimensions from the API — use natural image load trick below)
+      const withRatios = photos.map(p => ({ ...p, _ratio: 0.75 + Math.random() * 0.5 }));
+      setPhotos(withRatios);
+    } catch (e) {
+      setError(e.message || 'Failed to load gallery.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  // Preload images and update their actual aspect ratios
+  useEffect(() => {
+    if (photos.length === 0) return;
+    photos.forEach((photo, i) => {
+      const img = new Image();
+      img.onload = () => {
+        if (img.width && img.height) {
+          const ratio = img.height / img.width;
+          setPhotos(prev => prev.map((p, j) => j === i ? { ...p, _ratio: ratio } : p));
+        }
+      };
+      img.src = photo.thumbnailUrl || photo.imageUrl;
+    });
+  }, [photos.length]); // eslint-disable-line
+
+  const columns = buildColumns(photos, columnCount);
+  const coupleName = config?.name?.replace(/\s*Wedding\s*$/i, '').trim() || 'Aarav & Siya';
+
+  return (
+    <div style={{
+      minHeight: '100vh',
+      background: 'var(--t-bg, #F7F3ED)',
+      fontFamily: "'Jost', sans-serif",
+    }}>
+      {/* Minimal nav */}
+      <header style={{
+        position: 'sticky', top: 0, zIndex: 40,
+        height: 64,
+        padding: '0 clamp(16px, 4vw, 56px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        background: 'rgba(247,243,237,0.94)',
+        borderBottom: '1px solid rgba(0,0,0,0.07)',
+        backdropFilter: 'blur(16px)',
+      }} role="banner">
+        <a href="/"
+          style={{
+            fontFamily: "'Cormorant Garamond',Georgia,serif",
+            fontSize: 26, fontWeight: 600, letterSpacing: '-0.06em',
+            color: 'var(--t-fg,#26372C)', textDecoration: 'none', lineHeight: 1,
+          }}
+          aria-label="Return home">
+          A<span style={{ fontSize: 17, color: '#8B6E7F', margin: '0 1px' }}>&amp;</span>S
         </a>
-        <nav className="nav-links gallery-nav-links" aria-label="Site navigation">
-          <a href="/">Home</a>
-          <a href="/#story">Our Story</a>
-          <a href="/#events">Events</a>
-          <a href="/gallery" aria-current="page">Gallery</a>
-          <a href="/#rsvp">RSVP</a>
+
+        <nav aria-label="Gallery navigation"
+          style={{ display: 'flex', alignItems: 'center', gap: 'clamp(12px,2vw,28px)' }}>
+          {[['Home','/'],['Events','/#events'],['RSVP','/#rsvp']].map(([label, href]) => (
+            <a key={href} href={href}
+              style={{ fontSize: 12, fontWeight: 500, color: '#4A4A40',
+                textDecoration: 'none', letterSpacing: '0.02em' }}>
+              {label}
+            </a>
+          ))}
+          <a href="/gallery" aria-current="page"
+            style={{ fontSize: 12, fontWeight: 600, color: '#8B6E7F',
+              textDecoration: 'none', letterSpacing: '0.02em' }}>
+            Gallery
+          </a>
         </nav>
-        <a className="btn btn-primary nav-rsvp-btn" href="/#rsvp">
-          RSVP Now <ArrowUpRight size={14} aria-hidden="true" />
-        </a>
       </header>
 
-      <main className="gallery-page-main">
-        <span className="eyebrow">OUR MEMORIES</span>
-        <h1>Photo <em>Gallery</em></h1>
-        <p>A collection of our favourite moments.</p>
+      {/* Content */}
+      <main style={{ maxWidth: 1400, margin: '0 auto', padding: 'clamp(24px,4vw,48px) clamp(12px,3vw,32px) 80px' }}>
 
-        {/* Category tabs */}
-        <div className="gallery-tabs" role="tablist" aria-label="Filter gallery by category">
-          {TABS.map(tab => (
-            <button
-              key={tab}
-              role="tab"
-              aria-selected={activeTab === tab}
-              className={`gallery-tab${activeTab === tab ? ' gallery-tab--active' : ''}`}
-              onClick={() => setActiveTab(tab)}
-            >
-              {tab}
+        {/* Loading state */}
+        {loading && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '80px 0' }}>
+              <Loader2 size={32} style={{ animation: 'spin 1s linear infinite', color: '#C4A6B2' }} aria-label="Loading gallery" />
+            </div>
+          </div>
+        )}
+
+        {/* Error state */}
+        {!loading && error && (
+          <div style={{ textAlign: 'center', padding: '80px 24px' }}>
+            <ImageOff size={40} color="#C4B8B0" style={{ margin: '0 auto 16px' }} aria-hidden="true" />
+            <p style={{ fontSize: 14, color: '#7A6A60', marginBottom: 20 }}>{error}</p>
+            <button onClick={load}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 8,
+                padding: '10px 20px', borderRadius: 999,
+                background: '#8B6E7F', color: '#fff', border: 'none',
+                fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+              <RefreshCw size={13} /> Try again
             </button>
-          ))}
-        </div>
+          </div>
+        )}
 
-        {/* Grid */}
-        <div className="gallery-page-grid" role="list">
-          <AnimatePresence>
-            {filtered.map((photo, i) => (
-              <motion.button
-                key={photo.src}
-                className={`gallery-page-item gpi-${(i % 4) + 1}`}
-                role="listitem"
-                onClick={() => setLightbox(photo)}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                transition={{ delay: i * 0.04, duration: 0.4 }}
-                aria-label={`View ${photo.alt}`}
-              >
-                <img src={photo.src} alt={photo.alt} loading="lazy" />
-                <span aria-hidden="true">
-                  Memory {String(i + 1).padStart(2, '0')} <ArrowUpRight size={13} />
-                </span>
-              </motion.button>
+        {/* Empty state */}
+        {!loading && !error && photos.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '80px 24px' }}>
+            <ImageOff size={40} color="#C4B8B0" style={{ margin: '0 auto 16px' }} aria-hidden="true" />
+            <p style={{ fontSize: 15, color: '#7A6A60', marginBottom: 8 }}>No photos yet</p>
+            <p style={{ fontSize: 13, color: '#B0A898' }}>
+              Approved guest photos will appear here.
+            </p>
+          </div>
+        )}
+
+        {/* Masonry grid */}
+        {!loading && photos.length > 0 && (
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: `repeat(${columnCount}, 1fr)`,
+            gap: 'clamp(8px,1.2vw,14px)',
+            alignItems: 'start',
+          }} role="list" aria-label="Wedding gallery">
+            {columns.map((col, ci) => (
+              <div key={ci} style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(8px,1.2vw,14px)' }}>
+                {col.map((photo, pi) => {
+                  const globalIndex = photos.findIndex(p => p.id === photo.id);
+                  return (
+                    <div key={photo.id} role="listitem">
+                      <PhotoCard
+                        photo={photo}
+                        index={globalIndex}
+                        onOpen={setLightbox}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
             ))}
-          </AnimatePresence>
-        </div>
+          </div>
+        )}
 
-        <a className="btn btn-primary gallery-back-btn" href="/">
-          Return to invitation <ArrowUpRight size={14} aria-hidden="true" />
-        </a>
+        {/* Back link */}
+        {!loading && (
+          <div style={{ textAlign: 'center', marginTop: 56 }}>
+            <a href="/"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 8,
+                fontSize: 12, fontWeight: 600, color: '#8B6E7F',
+                textDecoration: 'none', letterSpacing: '0.04em',
+                borderBottom: '1px solid currentColor', paddingBottom: 2 }}>
+              Return to invitation <ArrowUpRight size={13} aria-hidden="true" />
+            </a>
+          </div>
+        )}
       </main>
 
       {/* Footer */}
-      <footer className="site-footer gallery-page-footer" role="contentinfo">
-        <span className="eyebrow">WITH LOVE, ALWAYS</span>
-        <h2>Aarav <em>&amp;</em> Siya</h2>
-        <p>17 · 02 · 2027 · Bangalore, India</p>
+      <footer style={{ textAlign: 'center', padding: '40px 20px 48px',
+        background: 'var(--t-footer-bg,#26372C)', color: 'var(--t-footer-fg,#F8F0F4)' }}
+        role="contentinfo">
+        <p style={{ fontFamily: "'Cormorant Garamond',Georgia,serif",
+          fontSize: 'clamp(28px,5vw,40px)', fontWeight: 600, margin: '0 0 8px', letterSpacing: '-0.03em' }}>
+          {coupleName.includes('&') ? (
+            <>
+              {coupleName.split('&')[0].trim()}
+              {' '}<em style={{ fontStyle: 'italic', opacity: 0.75 }}>&amp;</em>{' '}
+              {coupleName.split('&')[1]?.trim()}
+            </>
+          ) : coupleName}
+        </p>
+        <p style={{ fontSize: 11, letterSpacing: '0.18em', opacity: 0.55 }}>
+          {config?.eventDateUtc
+            ? new Date(config.eventDateUtc).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase()
+            : '17 · 02 · 2027'
+          } · {config?.venue?.split(',')[0] || 'Bangalore, India'}
+        </p>
       </footer>
 
       {/* Lightbox */}
       <AnimatePresence>
         {lightbox && (
-          <motion.div
-            className="lightbox"
-            role="dialog"
-            aria-modal="true"
-            aria-label={lightbox.alt}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setLightbox(null)}
-          >
-            <button
-              className="lightbox-close"
-              onClick={() => setLightbox(null)}
-              aria-label="Close photo"
-            >
-              <X size={22} />
-            </button>
-            <motion.img
-              src={lightbox.src}
-              alt={lightbox.alt}
-              initial={{ scale: 0.93 }}
-              animate={{ scale: 1 }}
-              onClick={e => e.stopPropagation()}
-            />
-          </motion.div>
+          <Lightbox key="lb" photo={lightbox} onClose={() => setLightbox(null)} />
         )}
       </AnimatePresence>
+
+      <style>{`
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes shimmer {
+          0%   { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          * { animation: none !important; transition: none !important; }
+        }
+      `}</style>
     </div>
   );
 }

@@ -1,0 +1,328 @@
+/*
+ * Wedding Theme Token System
+ * Each .theme-* class sets CSS custom properties consumed by every component.
+ * Components NEVER hardcode palette colors — they use var(--token-name).
+ */
+
+/* ─────────────────────────────────────────
+   BASE / SHARED TYPOGRAPHY SCALE
+───────────────────────────────────────── */
+:root {
+  --font-serif: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+  --font-sans:  'Jost', 'Tenor Sans', sans-serif;
+
+  /* Spacing scale */
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
+  --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px;
+  --space-12: 48px;--space-16: 64px;--space-20: 80px;--space-24: 96px;
+
+  /* Radius */
+  --radius-sm: 2px; --radius-md: 4px; --radius-lg: 8px; --radius-pill: 999px;
+
+  /* Focus ring */
+  --focus-ring: 2px solid var(--t-accent);
+
+  /* Transition */
+  --transition-base: 0.25s cubic-bezier(0.4,0,0.2,1);
+  --transition-slow: 0.55s cubic-bezier(0.2,0.8,0.2,1);
+}
+
+/* ─────────────────────────────────────────
+   THEME 01: THE ETERNAL BLOOM (default)
+   Lavender · dusty rose · pearl · mauve
+───────────────────────────────────────── */
+.theme-eternal-bloom {
+  --t-bg:           #F7F2F5;
+  --t-surface:      #EEE4EE;
+  --t-surface-hi:   #FBF6F9;
+  --t-paper:        #FDF9FC;
+  --t-fg:           #3A2535;
+  --t-muted:        #7A6070;
+  --t-border:       #DDD0DA;
+  --t-primary:      #8B6E7F;
+  --t-primary-fg:   #FDF9FC;
+  --t-accent:       #C4A6B2;
+  --t-accent-soft:  #EDE0EB;
+  --t-success:      #5C7A5C;
+  --t-warning:      #C4A85A;
+  --t-danger:       #C4606E;
+  --t-focus:        #8B6E7F;
+  --t-ink:          #4A2D3E;
+  --t-rose:         #8B6E7F;
+  --t-nav-bg:       rgba(251,246,249,0.94);
+  --t-hero-shade:   linear-gradient(90deg,#1e111800 0%,#1e111828 35%,#1e1118a0 100%),
+                    linear-gradient(0deg,#1e111858,transparent 38%);
+  --t-footer-bg:    #4A2D3E;
+  --t-footer-fg:    #F8F0F4;
+  --font-serif:     'Cormorant Garamond', Georgia, serif;
+}
+
+/* ─────────────────────────────────────────
+   THEME 02: MIDNIGHT VOWS
+   Near-black · burgundy · antique gold
+───────────────────────────────────────── */
+.theme-midnight-vows {
+  --t-bg:           #0F0A0A;
+  --t-surface:      #1A1010;
+  --t-surface-hi:   #221515;
+  --t-paper:        #2A1A1A;
+  --t-fg:           #F5E8D0;
+  --t-muted:        #9A8070;
+  --t-border:       #3D2525;
+  --t-primary:      #C9A84C;
+  --t-primary-fg:   #0F0A0A;
+  --t-accent:       #8B1A1A;
+  --t-accent-soft:  #2A1515;
+  --t-success:      #4A7A4A;
+  --t-warning:      #C9A84C;
+  --t-danger:       #C44040;
+  --t-focus:        #C9A84C;
+  --t-ink:          #F5E8D0;
+  --t-rose:         #C9A84C;
+  --t-nav-bg:       rgba(15,10,10,0.96);
+  --t-hero-shade:   linear-gradient(90deg,#17110d00 0%,#1c140d30 35%,#1d140db8 100%),
+                    linear-gradient(0deg,#1c140d58,transparent 38%);
+  --t-footer-bg:    #070404;
+  --t-footer-fg:    #F5E8D0;
+  --font-serif:     'Cormorant Garamond', Georgia, serif;
+}
+
+/* ─────────────────────────────────────────
+   THEME 03: MARIGOLD MANDAP
+   Saffron · vermilion · ivory · antique gold
+───────────────────────────────────────── */
+.theme-marigold-mandap {
+  --t-bg:           #FDF7E8;
+  --t-surface:      #F5EAC8;
+  --t-surface-hi:   #FFFCF0;
+  --t-paper:        #FFFBF0;
+  --t-fg:           #3A1A08;
+  --t-muted:        #8B5A30;
+  --t-border:       #E8D0A0;
+  --t-primary:      #E07A30;
+  --t-primary-fg:   #FFFBF0;
+  --t-accent:       #D4A843;
+  --t-accent-soft:  #F5E8B8;
+  --t-success:      #7A8C55;
+  --t-warning:      #D4A843;
+  --t-danger:       #CC4B2C;
+  --t-focus:        #E07A30;
+  --t-ink:          #4A1A08;
+  --t-rose:         #CC4B2C;
+  --t-nav-bg:       rgba(253,247,232,0.95);
+  --t-hero-shade:   linear-gradient(90deg,#32180800 0%,#32180830 35%,#321808a8 100%),
+                    linear-gradient(0deg,#32180858,transparent 38%);
+  --t-footer-bg:    #3A1A08;
+  --t-footer-fg:    #FDF7E8;
+  --font-serif:     'Cormorant Garamond', Georgia, serif;
+}
+
+/* ─────────────────────────────────────────
+   THEME 04: TUSCAN ROMANCE
+   Terracotta · olive · warm cream · muted clay
+───────────────────────────────────────── */
+.theme-tuscan-romance {
+  --t-bg:           #F8EFE2;
+  --t-surface:      #EFE0CD;
+  --t-surface-hi:   #FCF6EC;
+  --t-paper:        #FFF9F0;
+  --t-fg:           #3A2010;
+  --t-muted:        #7A6050;
+  --t-border:       #E0CCAA;
+  --t-primary:      #B5613A;
+  --t-primary-fg:   #FFF9F0;
+  --t-accent:       #7A8C55;
+  --t-accent-soft:  #EAE4D4;
+  --t-success:      #7A8C55;
+  --t-warning:      #D4A87A;
+  --t-danger:       #B5613A;
+  --t-focus:        #B5613A;
+  --t-ink:          #432E27;
+  --t-rose:         #B5613A;
+  --t-nav-bg:       rgba(252,246,236,0.95);
+  --t-hero-shade:   linear-gradient(90deg,#321b1200 0%,#321b1235 35%,#321b12a8 100%),
+                    linear-gradient(0deg,#321b1258,transparent 38%);
+  --t-footer-bg:    #432E27;
+  --t-footer-fg:    #F8EFE2;
+  --font-serif:     'Playfair Display', Georgia, serif;
+}
+
+/* ─────────────────────────────────────────
+   THEME 05: PEARL ATELIER
+   Porcelain · pearl · charcoal · silver
+───────────────────────────────────────── */
+.theme-pearl-atelier {
+  --t-bg:           #F8F6F3;
+  --t-surface:      #EEECEA;
+  --t-surface-hi:   #FFFFFF;
+  --t-paper:        #FFFFFF;
+  --t-fg:           #1A1A1A;
+  --t-muted:        #707070;
+  --t-border:       #DEDAD5;
+  --t-primary:      #3A3A3A;
+  --t-primary-fg:   #FFFFFF;
+  --t-accent:       #9E9E9E;
+  --t-accent-soft:  #EEECEA;
+  --t-success:      #4A7A4A;
+  --t-warning:      #9E8A5C;
+  --t-danger:       #8A3A3A;
+  --t-focus:        #3A3A3A;
+  --t-ink:          #1A1A1A;
+  --t-rose:         #5C5C5C;
+  --t-nav-bg:       rgba(248,246,243,0.96);
+  --t-hero-shade:   linear-gradient(90deg,#10101000 0%,#10101028 35%,#101010a0 100%),
+                    linear-gradient(0deg,#10101050,transparent 38%);
+  --t-footer-bg:    #1A1A1A;
+  --t-footer-fg:    #F8F6F3;
+  --font-serif:     'EB Garamond', Georgia, serif;
+}
+
+/* ─────────────────────────────────────────
+   THEME 06: SAKURA REVERIE
+   Cherry-blossom pink · cream · muted plum
+───────────────────────────────────────── */
+.theme-sakura-reverie {
+  --t-bg:           #FDF5F7;
+  --t-surface:      #F5E4EA;
+  --t-surface-hi:   #FFF8FA;
+  --t-paper:        #FFF8FA;
+  --t-fg:           #3D1F2D;
+  --t-muted:        #8A6070;
+  --t-border:       #E8D0D8;
+  --t-primary:      #D4889A;
+  --t-primary-fg:   #FFF8FA;
+  --t-accent:       #8B4D6B;
+  --t-accent-soft:  #F5E0E6;
+  --t-success:      #5C8A5C;
+  --t-warning:      #C4A870;
+  --t-danger:       #C44060;
+  --t-focus:        #D4889A;
+  --t-ink:          #3D1F2D;
+  --t-rose:         #D4889A;
+  --t-nav-bg:       rgba(253,245,247,0.95);
+  --t-hero-shade:   linear-gradient(90deg,#25131e00 0%,#25131e30 35%,#25131ea0 100%),
+                    linear-gradient(0deg,#25131e55,transparent 38%);
+  --t-footer-bg:    #3D1F2D;
+  --t-footer-fg:    #FDF5F7;
+  --font-serif:     'Cormorant Garamond', Georgia, serif;
+}
+
+/* ─────────────────────────────────────────
+   THEME 07: THE SECRET GARDEN
+   Sage · forest green · parchment · muted gold
+───────────────────────────────────────── */
+.theme-secret-garden {
+  --t-bg:           #F3F0E5;
+  --t-surface:      #E4DDCA;
+  --t-surface-hi:   #FAF8F0;
+  --t-paper:        #FFFDF4;
+  --t-fg:           #2D3A1E;
+  --t-muted:        #6A7060;
+  --t-border:       #D4CDB0;
+  --t-primary:      #5C7A5C;
+  --t-primary-fg:   #FFFDF4;
+  --t-accent:       #C4A85A;
+  --t-accent-soft:  #EAE8D8;
+  --t-success:      #5C7A5C;
+  --t-warning:      #C4A85A;
+  --t-danger:       #8A3A3A;
+  --t-focus:        #5C7A5C;
+  --t-ink:          #2D3A1E;
+  --t-rose:         #5C7A5C;
+  --t-nav-bg:       rgba(243,240,229,0.95);
+  --t-hero-shade:   linear-gradient(90deg,#1a251e00 0%,#1a251e28 35%,#1a251e95 100%),
+                    linear-gradient(0deg,#1a251e55,transparent 38%);
+  --t-footer-bg:    #2D3A1E;
+  --t-footer-fg:    #F3F0E5;
+  --font-serif:     'EB Garamond', Georgia, serif;
+}
+
+/* ─────────────────────────────────────────
+   THEME 08: OCEAN SERENADE
+   Deep teal · sea glass · sand · pearl
+───────────────────────────────────────── */
+.theme-ocean-serenade {
+  --t-bg:           #EFF7F7;
+  --t-surface:      #D8EDEC;
+  --t-surface-hi:   #F8FCFC;
+  --t-paper:        #F8FCFC;
+  --t-fg:           #0D3A4A;
+  --t-muted:        #4A7A88;
+  --t-border:       #B8D8DA;
+  --t-primary:      #2A7A8C;
+  --t-primary-fg:   #F8FCFC;
+  --t-accent:       #7ABCB8;
+  --t-accent-soft:  #DFF0EF;
+  --t-success:      #4A8A6A;
+  --t-warning:      #C4A870;
+  --t-danger:       #8A3A4A;
+  --t-focus:        #2A7A8C;
+  --t-ink:          #0D3A4A;
+  --t-rose:         #2A7A8C;
+  --t-nav-bg:       rgba(239,247,247,0.96);
+  --t-hero-shade:   linear-gradient(90deg,#0d3a4a00 0%,#0d3a4a28 35%,#0d3a4aa0 100%),
+                    linear-gradient(0deg,#0d3a4a58,transparent 38%);
+  --t-footer-bg:    #0D3A4A;
+  --t-footer-fg:    #EFF7F7;
+  --font-serif:     'Cormorant Garamond', Georgia, serif;
+}
+
+/* ─────────────────────────────────────────
+   THEME 09: CINEMA PARADISO
+   Sepia · espresso · parchment · faded rose
+───────────────────────────────────────── */
+.theme-cinema-paradiso {
+  --t-bg:           #F5EDDF;
+  --t-surface:      #E8DCCB;
+  --t-surface-hi:   #FAF4EA;
+  --t-paper:        #FAF4EA;
+  --t-fg:           #2A1A0A;
+  --t-muted:        #7A6050;
+  --t-border:       #D8C8A8;
+  --t-primary:      #8B5E3C;
+  --t-primary-fg:   #FAF4EA;
+  --t-accent:       #C4977A;
+  --t-accent-soft:  #EEE0CE;
+  --t-success:      #5C7A4A;
+  --t-warning:      #C4977A;
+  --t-danger:       #8A3A2A;
+  --t-focus:        #8B5E3C;
+  --t-ink:          #2A1A0A;
+  --t-rose:         #8B5E3C;
+  --t-nav-bg:       rgba(245,237,223,0.95);
+  --t-hero-shade:   linear-gradient(90deg,#1e140800 0%,#1e140828 35%,#1e1408a0 100%),
+                    linear-gradient(0deg,#1e140858,transparent 38%);
+  --t-footer-bg:    #1E1408;
+  --t-footer-fg:    #F5EDDF;
+  --font-serif:     'Playfair Display', Georgia, serif;
+}
+
+/* ─────────────────────────────────────────
+   THEME 10: CELESTIAL PROMISE
+   Indigo · midnight blue · lavender · silver
+───────────────────────────────────────── */
+.theme-celestial-promise {
+  --t-bg:           #0A0A1A;
+  --t-surface:      #12122A;
+  --t-surface-hi:   #1A1A38;
+  --t-paper:        #1A1A38;
+  --t-fg:           #F0EEFF;
+  --t-muted:        #8A88B8;
+  --t-border:       #2A2A5A;
+  --t-primary:      #7B7EC8;
+  --t-primary-fg:   #F0EEFF;
+  --t-accent:       #9BA4E0;
+  --t-accent-soft:  #1E1E48;
+  --t-success:      #4A8A6A;
+  --t-warning:      #C8C080;
+  --t-danger:       #C84060;
+  --t-focus:        #9BA4E0;
+  --t-ink:          #F0EEFF;
+  --t-rose:         #9BA4E0;
+  --t-nav-bg:       rgba(10,10,26,0.96);
+  --t-hero-shade:   linear-gradient(90deg,#0a0a1a00 0%,#0a0a1a30 35%,#0a0a1aa8 100%),
+                    linear-gradient(0deg,#0a0a1a60,transparent 38%);
+  --t-footer-bg:    #05050F;
+  --t-footer-fg:    #F0EEFF;
+  --font-serif:     'Cormorant Garamond', Georgia, serif;
+}

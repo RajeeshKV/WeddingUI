@@ -12,17 +12,12 @@ import { getPublicGallery, getWeddingConfig } from '../services/api/public.js';
 
 const SLUG = import.meta.env.VITE_WEDDING_SLUG || '';
 
-// ── Masonry layout engine ─────────────────────────────────────────
-// Distributes photos into N columns by shortest column height.
-// Each photo is given a natural aspect ratio; images are left to fill their width.
+// Distributes photos into N columns using round-robin so they fill evenly.
+// Images determine their own height via natural aspect ratio.
 function buildColumns(photos, columnCount) {
   const cols = Array.from({ length: columnCount }, () => []);
-  const heights = new Array(columnCount).fill(0);
   photos.forEach((photo, i) => {
-    const ratio = photo._ratio || 0.75; // default 4:3
-    const shortest = heights.indexOf(Math.min(...heights));
-    cols[shortest].push({ ...photo, _ratio: ratio });
-    heights[shortest] += ratio;
+    cols[i % columnCount].push(photo);
   });
   return cols;
 }
@@ -128,6 +123,12 @@ function Lightbox({ photo, onClose }) {
 // ── Photo card ────────────────────────────────────────────────────
 function PhotoCard({ photo, onOpen, index }) {
   const [loaded, setLoaded] = useState(false);
+  const imgRef = useRef(null);
+
+  // If image is already cached, onLoad won't fire — check immediately
+  useEffect(() => {
+    if (imgRef.current?.complete) setLoaded(true);
+  }, []);
 
   return (
     <motion.button
@@ -141,34 +142,44 @@ function PhotoCard({ photo, onOpen, index }) {
         position: 'relative', width: '100%',
         display: 'block', background: 'none', border: 'none',
         padding: 0, cursor: 'pointer', borderRadius: 6, overflow: 'hidden',
-        marginBottom: 0,
       }}
     >
-      {/* Skeleton until image loads */}
-      {!loaded && (
-        <div style={{
-          width: '100%',
-          paddingBottom: `${(photo._ratio || 0.75) * 100}%`,
-          background: '#EDE8E2',
-          borderRadius: 6,
-        }} aria-hidden="true" />
-      )}
+      {/* Skeleton — shown until image loads, sits behind the image */}
+      <div style={{
+        position: loaded ? 'absolute' : 'relative',
+        inset: loaded ? 0 : undefined,
+        width: '100%',
+        paddingBottom: loaded ? undefined : `${(photo._ratio || 0.75) * 100}%`,
+        background: 'linear-gradient(135deg, #EDE8E2 0%, #E4DDD8 50%, #EDE8E2 100%)',
+        backgroundSize: '200% 100%',
+        animation: loaded ? 'none' : 'shimmer 1.4s ease-in-out infinite',
+        borderRadius: 6,
+        transition: 'opacity 0.3s',
+        opacity: loaded ? 0 : 1,
+        pointerEvents: 'none',
+      }} aria-hidden="true" />
+
+      {/* Always render img — opacity transition instead of display:none */}
       <img
+        ref={imgRef}
         src={photo.thumbnailUrl || photo.imageUrl}
         alt={photo.uploadedByName ? `Photo by ${photo.uploadedByName}` : `Wedding photo ${index + 1}`}
         loading="lazy"
         onLoad={() => setLoaded(true)}
         style={{
           width: '100%',
-          display: loaded ? 'block' : 'none',
+          display: 'block',
           borderRadius: 6,
           verticalAlign: 'bottom',
+          opacity: loaded ? 1 : 0,
+          transition: 'opacity 0.4s ease',
         }}
       />
+
       {/* Hover overlay */}
       <div style={{
         position: 'absolute', inset: 0,
-        background: 'linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 50%)',
+        background: 'linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 55%)',
         borderRadius: 6,
         opacity: 0,
         transition: 'opacity 0.25s',
@@ -188,6 +199,10 @@ function PhotoCard({ photo, onOpen, index }) {
       <style>{`
         button:hover .photo-overlay { opacity: 1 !important; }
         button:hover .photo-caption { opacity: 1 !important; }
+        @keyframes shimmer {
+          0%   { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
       `}</style>
     </motion.button>
   );
@@ -215,13 +230,9 @@ export function GalleryPage() {
         getWeddingConfig(),
       ]);
 
-      const photos = gallery.status === 'fulfilled' ? gallery.value : [];
+      const photos = gallery.status === 'fulfilled' ? (gallery.value || []) : [];
       if (cfg.status === 'fulfilled') setConfig(cfg.value);
-
-      // Assign a random plausible aspect ratio per photo
-      // (we don't have dimensions from the API — use natural image load trick below)
-      const withRatios = photos.map(p => ({ ...p, _ratio: 0.75 + Math.random() * 0.5 }));
-      setPhotos(withRatios);
+      setPhotos(photos);
     } catch (e) {
       setError(e.message || 'Failed to load gallery.');
     } finally {
@@ -230,21 +241,6 @@ export function GalleryPage() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
-
-  // Preload images and update their actual aspect ratios
-  useEffect(() => {
-    if (photos.length === 0) return;
-    photos.forEach((photo, i) => {
-      const img = new Image();
-      img.onload = () => {
-        if (img.width && img.height) {
-          const ratio = img.height / img.width;
-          setPhotos(prev => prev.map((p, j) => j === i ? { ...p, _ratio: ratio } : p));
-        }
-      };
-      img.src = photo.thumbnailUrl || photo.imageUrl;
-    });
-  }, [photos.length]); // eslint-disable-line
 
   const columns = buildColumns(photos, columnCount);
   const coupleName = config?.name?.replace(/\s*Wedding\s*$/i, '').trim() || 'Aarav & Siya';

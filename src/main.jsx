@@ -28,6 +28,7 @@ import { GalleryPage }   from './features/GalleryPage.jsx';
 import { ThemeLauncher } from './features/ThemeLauncher.jsx';
 import { AdminApp }      from './features/admin/AdminApp.jsx';
 import { SuApp }         from './features/su/SuApp.jsx';
+import { NotFound }      from './features/NotFound.jsx';
 
 // Public data hook
 import { useWeddingData } from './hooks/useWeddingData.js';
@@ -51,16 +52,26 @@ const SITE_MODE     = import.meta.env.VITE_SITE_MODE     || 'launcher';
 const DEFAULT_THEME = import.meta.env.VITE_DEFAULT_THEME || 'eternal-bloom';
 
 /* ─── Router ───────────────────────────────────────────────── */
+// Known paths. Everything else → 404.
+const KNOWN_PATHS = new Set(['', '/', '/gallery', '/admin', '/su']);
+
 function getRoute() {
-  const path  = window.location.pathname.replace(/\/$/, '');
+  const path  = window.location.pathname.replace(/\/$/, '') || '/';
   const theme = new URLSearchParams(window.location.search).get('theme');
 
   if (path === '/gallery') return { route: 'gallery' };
   if (path === '/admin')   return { route: 'admin' };
   if (path === '/su')      return { route: 'su' };
-  if (theme)               return { route: 'site', themeId: theme };
-  if (SITE_MODE === 'wedding') return { route: 'site', themeId: DEFAULT_THEME };
-  return { route: 'launcher' };
+
+  // Root path
+  if (path === '/' || path === '') {
+    if (theme)               return { route: 'site', themeId: theme };
+    if (SITE_MODE === 'wedding') return { route: 'site', themeId: DEFAULT_THEME };
+    return { route: 'launcher' };
+  }
+
+  // Any other path is 404
+  return { route: 'not-found' };
 }
 
 /* ─── Main Site ────────────────────────────────────────────── */
@@ -160,10 +171,11 @@ function MainSite({ initialThemeId = DEFAULT_THEME }) {
 /* ─── App router ───────────────────────────────────────────── */
 function App() {
   const { route, themeId } = getRoute();
-  if (route === 'gallery') return <GalleryPage />;
-  if (route === 'admin')   return <AdminApp />;
-  if (route === 'su')      return <SuApp />;
-  if (route === 'launcher') return <ThemeLauncher />;
+  if (route === 'gallery')   return <GalleryPage />;
+  if (route === 'admin')     return <AdminApp />;
+  if (route === 'su')        return <SuApp />;
+  if (route === 'launcher')  return <ThemeLauncher />;
+  if (route === 'not-found') return <NotFound />;
   return <MainSite initialThemeId={themeId} />;
 }
 

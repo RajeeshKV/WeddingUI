@@ -140,7 +140,7 @@ function MainSite({ initialThemeId = DEFAULT_THEME }) {
         <Welcome    />
         <Story      />
         <Events     apiEvents={events}   onScrollTo={scrollTo} />
-        <Gallery    apiPhotos={gallery}  weddingConfig={config} />
+        <Gallery    weddingConfig={config} />
         <RSVP       weddingConfig={config} />
         <Travel     weddingConfig={config} />
       </main>

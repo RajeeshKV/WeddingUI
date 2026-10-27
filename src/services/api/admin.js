@@ -57,25 +57,37 @@ export function resetPassword({ email, otp, newPassword }) {
   return api.post(base('/auth/reset-password'), { email, otp, newPassword });
 }
 
-// ── Dashboard (stats only — per OpenAPI spec) ─────────────────────
+// ── Dashboard ─────────────────────────────────────────────────────
 // GET /api/v1/admin/weddings/{weddingId}/dashboard
-// Returns: { totalRsvps, attendingCount, notAttendingCount, maybeCount,
-//            totalPhotos, pendingPhotos, approvedPhotos }
 export function getAdminDashboard(weddingId) {
   return api.get(base(`/weddings/${weddingId}/dashboard`), { role: ROLE });
 }
 
 // ── Wedding config ────────────────────────────────────────────────
+// GET /api/v1/admin/weddings/{weddingId}/config
+export function getAdminWeddingConfig(weddingId) {
+  return api.get(base(`/weddings/${weddingId}/config`), { role: ROLE });
+}
+
 // PUT /api/v1/admin/weddings/{weddingId}/config
-// All fields optional (nullable in spec) — only send what changed
 export function updateWeddingConfig(weddingId, config) {
   return api.put(base(`/weddings/${weddingId}/config`), config, { role: ROLE });
 }
 
-// ── Photo moderation ──────────────────────────────────────────────
-// GET /api/v1/admin/photos/pending
+// ── Photos ────────────────────────────────────────────────────────
+// GET /api/v1/admin/photos — all photos across admin's weddings
+export function getAllAdminPhotos() {
+  return api.get(base('/photos'), { role: ROLE });
+}
+
+// GET /api/v1/admin/photos/pending — pending only
 export function getPendingPhotos() {
   return api.get(base('/photos/pending'), { role: ROLE });
+}
+
+// GET /api/v1/admin/weddings/{weddingId}/photos — all photos for one wedding
+export function getWeddingPhotos(weddingId) {
+  return api.get(base(`/weddings/${weddingId}/photos`), { role: ROLE });
 }
 
 // POST /api/v1/admin/photos/{photoId}/approve
@@ -88,6 +100,11 @@ export function rejectPhoto(photoId) {
   return api.post(base(`/photos/${photoId}/reject`), null, { role: ROLE });
 }
 
+// DELETE /api/v1/admin/photos/{photoId}
+export function deletePhoto(photoId) {
+  return api.delete(base(`/photos/${photoId}`), { role: ROLE });
+}
+
 // POST /api/v1/admin/photos/bulk-approve  body: string[] (UUID array)
 export function bulkApprovePhotos(photoIds) {
   return api.post(base('/photos/bulk-approve'), photoIds, { role: ROLE });
@@ -97,7 +114,3 @@ export function bulkApprovePhotos(photoIds) {
 export function enableAutoApprove(weddingId) {
   return api.post(base(`/weddings/${weddingId}/photos/auto-approve`), null, { role: ROLE });
 }
-
-// NOTE: There is NO /admin/weddings/{id}/rsvp endpoint in the OpenAPI spec.
-// RSVP list is read from the public endpoint using the wedding slug.
-// See: getPublicRsvps() in public.js (added for admin use).

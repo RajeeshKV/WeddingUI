@@ -2,16 +2,16 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Images, Settings, LogOut, Heart,
-  Users, CheckCircle, XCircle, Clock, Check, X,
+  Users, CheckCircle, XCircle, Clock, Check, X, Trash2,
   Key, AlertTriangle, Loader2, UserCheck, UserX,
-  RefreshCw, ToggleLeft, ToggleRight, Save,
+  RefreshCw, ToggleLeft, ToggleRight, Save, Eye,
 } from 'lucide-react';
 import {
   getAdminDashboard,
-  getPendingPhotos, approvePhoto, rejectPhoto, bulkApprovePhotos,
-  updateWeddingConfig, changePassword, enableAutoApprove,
+  getPendingPhotos, getAllAdminPhotos,
+  approvePhoto, rejectPhoto, deletePhoto, bulkApprovePhotos,
+  updateWeddingConfig, changePassword, getAdminWeddingConfig,
 } from '../../services/api/admin.js';
-import { getWeddingConfig } from '../../services/api/public.js';
 import { getWeddingIdFromToken } from '../../stores/authStore.js';
 
 // ─────────────────────────────────────────────────────────────────
@@ -205,142 +205,333 @@ function Overview({ weddingId }) {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Photo Moderation
+// Photo grid — shared card component
+// ─────────────────────────────────────────────────────────────────
+
+function PhotoCard({ photo, onApprove, onReject, onDelete, onPreview, selectable, selected, onToggle, busy }) {
+  const [confirmDel, setConfirmDel] = useState(false);
+
+  return (
+    <div style={{
+      position: 'relative', borderRadius: 6, overflow: 'hidden',
+      background: '#E8E4DF',
+      boxShadow: selected ? '0 0 0 2px #8B6E7F' : '0 1px 4px rgba(0,0,0,0.08)',
+      transition: 'box-shadow 0.15s',
+    }}>
+      {/* Checkbox overlay */}
+      {selectable && (
+        <label style={{ position: 'absolute', top: 8, left: 8, zIndex: 3, cursor: 'pointer' }}>
+          <input type="checkbox" checked={selected} onChange={onToggle}
+            style={{ width: 16, height: 16, accentColor: '#8B6E7F', cursor: 'pointer' }} />
+        </label>
+      )}
+
+      {/* Status badge */}
+      <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 3 }}>
+        <Pill status={photo.status} />
+      </div>
+
+      {/* Image */}
+      <button onClick={() => onPreview(photo)} style={{
+        display: 'block', width: '100%', padding: 0, border: 'none',
+        cursor: 'pointer', background: 'none',
+      }} aria-label={`Preview photo by ${photo.uploadedByName || 'guest'}`}>
+        <img
+          src={photo.thumbnailUrl || photo.imageUrl}
+          alt={`Photo by ${photo.uploadedByName || 'guest'}`}
+          loading="lazy"
+          style={{ width: '100%', aspectRatio: '4/3', objectFit: 'cover', display: 'block' }}
+        />
+      </button>
+
+      {/* Info + actions */}
+      <div style={{ padding: '10px 12px 12px', background: '#fff' }}>
+        <p style={{ fontSize: 11, color: '#6A6258', margin: '0 0 2px', fontWeight: 600,
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {photo.uploadedByName || 'Anonymous'}
+        </p>
+        <p style={{ fontSize: 10, color: '#B0A898', margin: '0 0 10px' }}>
+          {new Date(photo.uploadedAtUtc).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' })}
+        </p>
+
+        <div style={{ display: 'flex', gap: 6 }}>
+          {photo.status !== 'Approved' && onApprove && (
+            <button onClick={() => onApprove(photo.id)} disabled={busy}
+              title="Approve" style={{ ...iconBtn('#059669'), flex: 1 }}>
+              <Check size={13} /> Approve
+            </button>
+          )}
+          {photo.status !== 'Rejected' && onReject && (
+            <button onClick={() => onReject(photo.id)} disabled={busy}
+              title="Reject" style={{ ...iconBtn('#D97706'), flex: 1 }}>
+              <X size={13} /> Reject
+            </button>
+          )}
+          {/* Delete with confirm */}
+          {!confirmDel ? (
+            <button onClick={() => setConfirmDel(true)} disabled={busy}
+              title="Delete permanently" style={iconBtn('#DC2626')}>
+              <Trash2 size={13} />
+            </button>
+          ) : (
+            <div style={{ display: 'flex', gap: 4 }}>
+              <button onClick={() => { setConfirmDel(false); onDelete(photo.id); }} disabled={busy}
+                style={{ ...iconBtn('#DC2626'), fontSize: 10, padding: '5px 8px' }}>
+                Confirm
+              </button>
+              <button onClick={() => setConfirmDel(false)}
+                style={{ ...iconBtn('#9A9088'), fontSize: 10, padding: '5px 8px' }}>
+                Cancel
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Photo lightbox preview
+// ─────────────────────────────────────────────────────────────────
+
+function PhotoLightbox({ photo, onClose }) {
+  useEffect(() => {
+    const h = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', h);
+    return () => document.removeEventListener('keydown', h);
+  }, [onClose]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      onClick={onClose}
+      style={{ position: 'fixed', inset: 0, zIndex: 999,
+        background: 'rgba(10,8,6,0.92)', backdropFilter: 'blur(6px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+    >
+      <button onClick={onClose} aria-label="Close"
+        style={{ position: 'fixed', top: 16, right: 16, width: 40, height: 40,
+          borderRadius: '50%', background: 'rgba(255,255,255,0.1)',
+          border: '1px solid rgba(255,255,255,0.2)', color: '#fff',
+          cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
+        <X size={18} />
+      </button>
+      <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }}
+        transition={{ duration: 0.25, ease: [0.2,0.8,0.2,1] }}
+        onClick={e => e.stopPropagation()}
+        style={{ maxWidth: 'min(1000px,95vw)', textAlign: 'center' }}>
+        <img src={photo.imageUrl} alt={`Photo by ${photo.uploadedByName || 'guest'}`}
+          style={{ maxHeight: '85vh', maxWidth: '100%', objectFit: 'contain',
+            borderRadius: 4, boxShadow: '0 24px 80px rgba(0,0,0,0.6)' }} />
+        <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, marginTop: 12 }}>
+          {photo.uploadedByName && <span>Shared by <strong style={{ color: '#fff' }}>{photo.uploadedByName}</strong></span>}
+          {photo.caption && <span> · {photo.caption}</span>}
+          <span style={{ marginLeft: 8 }}>
+            <Pill status={photo.status} />
+          </span>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Photo Moderation — two sections: Pending + All Photos
 // ─────────────────────────────────────────────────────────────────
 
 function PhotoModeration() {
-  const [photos,   setPhotos]   = useState([]);
+  const [pending,  setPending]  = useState([]);
+  const [all,      setAll]      = useState([]);
   const [loading,  setLoading]  = useState(true);
   const [error,    setError]    = useState('');
   const [selected, setSelected] = useState(new Set());
   const [busy,     setBusy]     = useState(false);
-  const [msg,      setMsg]      = useState('');
-  const [msgType,  setMsgType]  = useState('ok');
+  const [msg,      setMsg]      = useState({ text: '', ok: true });
+  const [preview,  setPreview]  = useState(null);
 
-  const load = useCallback(() => {
-    setLoading(true); setMsg('');
-    getPendingPhotos()
-      .then(data => { setPhotos(Array.isArray(data) ? data : []); setSelected(new Set()); })
-      .catch(e => setError(e.message || 'Failed to load pending photos.'))
-      .finally(() => setLoading(false));
+  const load = useCallback(async () => {
+    setLoading(true); setMsg({ text: '', ok: true });
+    try {
+      const [pend, allPhotos] = await Promise.allSettled([
+        getPendingPhotos(),
+        getAllAdminPhotos(),
+      ]);
+      setPending(pend.status === 'fulfilled' && Array.isArray(pend.value) ? pend.value : []);
+      setAll(allPhotos.status === 'fulfilled' && Array.isArray(allPhotos.value) ? allPhotos.value : []);
+      setSelected(new Set());
+    } catch (e) {
+      setError(e.message || 'Failed to load photos.');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => { load(); }, [load]);
 
-  const toggle = (id) => setSelected(prev => {
-    const next = new Set(prev);
-    next.has(id) ? next.delete(id) : next.add(id);
-    return next;
-  });
-
   const act = async (fn, successMsg) => {
-    setBusy(true); setMsg('');
+    setBusy(true);
     try {
       await fn();
-      setMsg(successMsg); setMsgType('ok');
+      setMsg({ text: successMsg, ok: true });
       load();
     } catch (e) {
-      setMsg(e.message || 'Action failed.'); setMsgType('err');
+      setMsg({ text: e.message || 'Action failed.', ok: false });
     } finally { setBusy(false); }
   };
 
-  const toggleAll = () => {
-    setSelected(prev => prev.size === photos.length
+  const toggleSelect = (id) => setSelected(prev => {
+    const n = new Set(prev);
+    n.has(id) ? n.delete(id) : n.add(id);
+    return n;
+  });
+
+  const toggleAllPending = () =>
+    setSelected(prev => prev.size === pending.length
       ? new Set()
-      : new Set(photos.map(p => p.id)));
-  };
+      : new Set(pending.map(p => p.id)));
 
   if (loading) return <Spinner />;
   if (error)   return <ErrBox msg={error} />;
 
+  // All photos excluding pending (already shown above)
+  const approved = all.filter(p => p.status === 'Approved');
+  const rejected = all.filter(p => p.status === 'Rejected');
+
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        flexWrap: 'wrap', gap: 12, marginBottom: 20 }}>
-        <h2 style={H2}>Photo Moderation</h2>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          {photos.length > 0 && (
-            <button onClick={toggleAll} style={ghostBtn}>
-              {selected.size === photos.length ? 'Deselect all' : 'Select all'}
-            </button>
-          )}
-          {selected.size > 0 && (
-            <button onClick={() => act(() => bulkApprovePhotos([...selected]),
-              `${selected.size} photo(s) approved.`)} disabled={busy}
-              style={solidBtn('#059669')}>
-              <Check size={13} aria-hidden="true" /> Approve {selected.size}
-            </button>
-          )}
-          <button onClick={load} disabled={busy} style={ghostBtn}>
-            <RefreshCw size={13} /> Refresh
-          </button>
-        </div>
+        flexWrap: 'wrap', gap: 10, marginBottom: 24 }}>
+        <h2 style={H2}>Photos</h2>
+        <button onClick={load} disabled={busy} style={ghostBtn}>
+          <RefreshCw size={13} /> Refresh
+        </button>
       </div>
 
-      {msg && (
-        <div style={{ marginBottom: 14, padding: '10px 14px', borderRadius: 5, fontSize: 12,
-          background: msgType === 'ok' ? '#DCFCE7' : '#FEE2E2',
-          color: msgType === 'ok' ? '#166534' : '#991B1B' }}
-          role="status" aria-live="polite">
-          {msg}
+      {msg.text && (
+        <div style={{ marginBottom: 16, padding: '10px 14px', borderRadius: 5, fontSize: 12,
+          background: msg.ok ? '#DCFCE7' : '#FEE2E2',
+          color: msg.ok ? '#166534' : '#991B1B' }}
+          role={msg.ok ? 'status' : 'alert'} aria-live="polite">
+          {msg.text}
         </div>
       )}
 
-      {photos.length === 0 ? (
-        <Card style={{ padding: '48px 24px', textAlign: 'center' }}>
-          <CheckCircle size={32} color="#C4A6B2" style={{ margin: '0 auto 12px' }} aria-hidden="true" />
-          <p style={{ color: '#9A9088', fontSize: 13, margin: 0 }}>
-            No pending photos — you're all caught up!
-          </p>
-        </Card>
-      ) : (
-        <div style={gridAuto(220)}>
-          {photos.map(photo => (
-            <Card key={photo.id} style={{ padding: 0, overflow: 'hidden' }}>
-              <div style={{ position: 'relative' }}>
-                <img
-                  src={photo.thumbnailUrl || photo.imageUrl}
-                  alt={`Photo by ${photo.uploadedByName || 'guest'}`}
-                  style={{ width: '100%', aspectRatio: '4/3', objectFit: 'cover', display: 'block' }}
-                  loading="lazy"
-                />
-                <label style={{ position: 'absolute', top: 8, left: 8,
-                  width: 20, height: 20, cursor: 'pointer', display: 'block' }}>
-                  <input type="checkbox" checked={selected.has(photo.id)}
-                    onChange={() => toggle(photo.id)}
-                    aria-label={`Select photo by ${photo.uploadedByName || 'guest'}`}
-                    style={{ width: 18, height: 18, accentColor: '#8B6E7F', cursor: 'pointer' }} />
-                </label>
-                <div style={{ position: 'absolute', top: 8, right: 8 }}>
-                  <Pill status={photo.status} />
-                </div>
-              </div>
-              <div style={{ padding: '12px 14px' }}>
-                <p style={{ fontSize: 11, color: '#6A6258', margin: '0 0 3px' }}>
-                  By <strong>{photo.uploadedByName || 'Anonymous'}</strong>
-                </p>
-                <p style={{ fontSize: 10, color: '#B0A898', margin: '0 0 12px' }}>
-                  {new Date(photo.uploadedAtUtc).toLocaleString('en-IN', {
-                    dateStyle: 'short', timeStyle: 'short',
-                  })}
-                </p>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button onClick={() => act(() => approvePhoto(photo.id), 'Approved.')}
-                    disabled={busy}
-                    style={{ ...solidBtn('#059669'), flex: 1, padding: '7px 0', justifyContent: 'center' }}>
-                    <Check size={13} aria-hidden="true" /> Approve
-                  </button>
-                  <button onClick={() => act(() => rejectPhoto(photo.id), 'Rejected.')}
-                    disabled={busy}
-                    style={{ ...solidBtn('#DC2626'), flex: 1, padding: '7px 0', justifyContent: 'center' }}>
-                    <X size={13} aria-hidden="true" /> Reject
-                  </button>
-                </div>
-              </div>
-            </Card>
-          ))}
+      {/* ── Section 1: Pending Approval ── */}
+      <div style={{ marginBottom: 40 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          flexWrap: 'wrap', gap: 10, marginBottom: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#F59E0B' }} aria-hidden="true" />
+            <h3 style={{ ...H3, margin: 0 }}>
+              Pending Approval
+              {pending.length > 0 && (
+                <span style={{ marginLeft: 8, fontSize: 12, fontWeight: 700, color: '#fff',
+                  background: '#F59E0B', borderRadius: 99, padding: '2px 9px' }}>
+                  {pending.length}
+                </span>
+              )}
+            </h3>
+          </div>
+          {pending.length > 0 && (
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={toggleAllPending} style={ghostBtn}>
+                {selected.size === pending.length ? 'Deselect all' : 'Select all'}
+              </button>
+              {selected.size > 0 && (
+                <button onClick={() => act(() => bulkApprovePhotos([...selected]),
+                  `${selected.size} photo(s) approved.`)} disabled={busy}
+                  style={solidBtn('#059669')}>
+                  <Check size={13} /> Approve {selected.size}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {pending.length === 0 ? (
+          <div style={{ padding: '32px 20px', textAlign: 'center',
+            background: '#fff', borderRadius: 6, border: '1px solid #EDE8E2' }}>
+            <CheckCircle size={28} color="#C4A6B2" style={{ margin: '0 auto 10px' }} aria-hidden="true" />
+            <p style={{ color: '#9A9088', fontSize: 13, margin: 0 }}>No photos awaiting approval</p>
+          </div>
+        ) : (
+          <div style={photoGrid}>
+            {pending.map(photo => (
+              <PhotoCard key={photo.id} photo={photo}
+                selectable selected={selected.has(photo.id)} onToggle={() => toggleSelect(photo.id)}
+                onApprove={(id) => act(() => approvePhoto(id), 'Photo approved.')}
+                onReject={(id) => act(() => rejectPhoto(id), 'Photo rejected.')}
+                onDelete={(id) => act(() => deletePhoto(id), 'Photo deleted.')}
+                onPreview={setPreview}
+                busy={busy} />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── Section 2: Approved Photos ── */}
+      <div style={{ marginBottom: 40 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+          <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#10B981' }} aria-hidden="true" />
+          <h3 style={{ ...H3, margin: 0 }}>
+            Approved
+            {approved.length > 0 && (
+              <span style={{ marginLeft: 8, fontSize: 12, fontWeight: 700, color: '#fff',
+                background: '#10B981', borderRadius: 99, padding: '2px 9px' }}>
+                {approved.length}
+              </span>
+            )}
+          </h3>
+        </div>
+
+        {approved.length === 0 ? (
+          <div style={{ padding: '24px 20px', textAlign: 'center',
+            background: '#fff', borderRadius: 6, border: '1px solid #EDE8E2' }}>
+            <p style={{ color: '#9A9088', fontSize: 13, margin: 0 }}>No approved photos yet</p>
+          </div>
+        ) : (
+          <div style={photoGrid}>
+            {approved.map(photo => (
+              <PhotoCard key={photo.id} photo={photo}
+                onReject={(id) => act(() => rejectPhoto(id), 'Photo moved to rejected.')}
+                onDelete={(id) => act(() => deletePhoto(id), 'Photo deleted.')}
+                onPreview={setPreview}
+                busy={busy} />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── Section 3: Rejected Photos ── */}
+      {rejected.length > 0 && (
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+            <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#EF4444' }} aria-hidden="true" />
+            <h3 style={{ ...H3, margin: 0 }}>
+              Rejected
+              <span style={{ marginLeft: 8, fontSize: 12, fontWeight: 700, color: '#fff',
+                background: '#EF4444', borderRadius: 99, padding: '2px 9px' }}>
+                {rejected.length}
+              </span>
+            </h3>
+          </div>
+          <div style={photoGrid}>
+            {rejected.map(photo => (
+              <PhotoCard key={photo.id} photo={photo}
+                onApprove={(id) => act(() => approvePhoto(id), 'Photo approved.')}
+                onDelete={(id) => act(() => deletePhoto(id), 'Photo deleted.')}
+                onPreview={setPreview}
+                busy={busy} />
+            ))}
+          </div>
         </div>
       )}
+
+      {/* Preview lightbox */}
+      <AnimatePresence>
+        {preview && <PhotoLightbox key="lb" photo={preview} onClose={() => setPreview(null)} />}
+      </AnimatePresence>
     </div>
   );
 }
@@ -348,8 +539,6 @@ function PhotoModeration() {
 // ─────────────────────────────────────────────────────────────────
 // Wedding Settings — loads current config from API first
 // ─────────────────────────────────────────────────────────────────
-
-const SLUG = import.meta.env.VITE_WEDDING_SLUG || '';
 
 function WeddingSettings({ weddingId }) {
   const [form, setForm] = useState({
@@ -361,10 +550,10 @@ function WeddingSettings({ weddingId }) {
   const [msg,    setMsg]    = useState('');
   const [error,  setError]  = useState('');
 
-  // Load current config on mount if slug is available
+  // Load current config on mount via admin endpoint (authenticated)
   useEffect(() => {
-    if (!SLUG) { setLoadingConfig(false); return; }
-    getWeddingConfig()
+    if (!weddingId) { setLoadingConfig(false); return; }
+    getAdminWeddingConfig(weddingId)
       .then(cfg => {
         setForm({
           name:                cfg.name               ?? '',
@@ -731,4 +920,24 @@ const solidBtn = (bg) => ({
   background: bg, color: '#fff', fontSize: 12, fontWeight: 600,
   cursor: 'pointer', fontFamily: "'Jost',sans-serif",
   transition: 'opacity 0.2s',
+});
+
+const H3 = {
+  fontFamily: "'Cormorant Garamond',Georgia,serif",
+  fontSize: 18, fontWeight: 600, color: '#1A1714',
+};
+
+// 4-column grid for photos
+const photoGrid = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+  gap: 12,
+};
+
+const iconBtn = (color) => ({
+  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+  padding: '6px 10px', border: `1px solid ${color}20`,
+  borderRadius: 4, background: `${color}10`,
+  color, fontSize: 11, fontWeight: 600, cursor: 'pointer',
+  fontFamily: "'Jost',sans-serif", transition: 'background 0.15s',
 });

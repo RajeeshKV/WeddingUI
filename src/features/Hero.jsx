@@ -42,7 +42,7 @@ export function Hero({ timeLeft, onScrollTo, weddingConfig = null, loading = fal
   const hasConfig = !loading && weddingConfig;
 
   // Parse names only when config is ready
-  let name1 = 'Aarav', name2 = 'Siya';
+  let name1 = null, name2 = null;
   if (hasConfig?.name) {
     const parts = hasConfig.name.trim().replace(/\s+wedding\s*$/i, '').split(/\s*&\s*|\s+and\s+/i);
     if (parts.length > 1 && parts[0].trim() && parts.slice(1).join(' & ').trim()) {

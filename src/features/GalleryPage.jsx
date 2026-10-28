@@ -245,7 +245,20 @@ export function GalleryPage() {
   useEffect(() => { load(); }, [load]);
 
   const columns = buildColumns(photos, columnCount);
-  const coupleName = config?.name?.replace(/\s*Wedding\s*$/i, '').trim() || 'Aarav & Siya';
+  // Names and date — only render when config is loaded (no fallback placeholder)
+  const nameParts = (() => {
+    if (!config?.name) return null;
+    const m = config.name.match(/^(.+?)\s*&\s*(.+?)(?:\s+Wedding)?$/i);
+    return m ? [m[1].trim(), m[2].trim()] : [config.name.replace(/\s*Wedding\s*$/i, '').trim()];
+  })();
+
+  const footerDate = config?.eventDateUtc
+    ? new Date(config.eventDateUtc).toLocaleDateString('en-IN', {
+        day: 'numeric', month: 'long', year: 'numeric',
+      }).toUpperCase()
+    : null;
+
+  const footerVenue = config?.venue?.split(',')[0] || null;
 
   return (
     <div style={{
@@ -373,22 +386,20 @@ export function GalleryPage() {
       <footer style={{ textAlign: 'center', padding: '40px 20px 48px',
         background: 'var(--t-footer-bg,#26372C)', color: 'var(--t-footer-fg,#F8F0F4)' }}
         role="contentinfo">
-        <p style={{ fontFamily: "'Cormorant Garamond',Georgia,serif",
-          fontSize: 'clamp(28px,5vw,40px)', fontWeight: 600, margin: '0 0 8px', letterSpacing: '-0.03em' }}>
-          {coupleName.includes('&') ? (
-            <>
-              {coupleName.split('&')[0].trim()}
-              {' '}<em className="couple-ampersand" style={{ opacity: 0.75 }}>&amp;</em>{' '}
-              {coupleName.split('&')[1]?.trim()}
-            </>
-          ) : coupleName}
-        </p>
-        <p style={{ fontSize: 11, letterSpacing: '0.18em', opacity: 0.55 }}>
-          {config?.eventDateUtc
-            ? new Date(config.eventDateUtc).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase()
-            : '17 · 02 · 2027'
-          } · {config?.venue?.split(',')[0] || 'Bangalore, India'}
-        </p>
+        {nameParts ? (
+          <p style={{ fontFamily: "'Cormorant Garamond',Georgia,serif",
+            fontSize: 'clamp(28px,5vw,40px)', fontWeight: 600, margin: '0 0 8px', letterSpacing: '-0.03em' }}>
+            {nameParts.length === 2
+              ? <>{nameParts[0]} <em style={{ opacity: 0.75 }}>&amp;</em> {nameParts[1]}</>
+              : nameParts[0]
+            }
+          </p>
+        ) : null}
+        {(footerDate || footerVenue) && (
+          <p style={{ fontSize: 11, letterSpacing: '0.18em', opacity: 0.55 }}>
+            {[footerDate, footerVenue].filter(Boolean).join(' · ')}
+          </p>
+        )}
       </footer>
 
       {/* Lightbox */}

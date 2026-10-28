@@ -3,10 +3,7 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { Flower2 } from 'lucide-react';
 import { IntroShell } from './IntroShell.jsx';
 import { InvitationLetter } from './InvitationLetter.jsx';
-import { FloatingPetals } from '../background/FloatingPetals.jsx';
-import { ParticleField } from '../background/ParticleField.jsx';
-import { ConstellationStars } from '../background/ConstellationStars.jsx';
-import { FilmGrain } from '../background/FilmGrain.jsx';
+import { ThemeMotion } from './ThemeMotion.jsx';
 
 const ART = {
   'eternal-bloom': { name:'The Eternal Bloom', eyebrow:'A promise in bloom', line:'soft petals drifting through a rose-lit garden', sky:'radial-gradient(ellipse at 50% 20%, #fff8f4 0%, #efd8dc 48%, #c9a6b5 100%)', ink:'#462638', muted:'#815d6e', paper:'#fffaf3', paper2:'#f2e2d6', seal:'#94485c', accent:'#c87f89', motif:'petals' },
@@ -48,32 +45,6 @@ const CONTRAST_INK = {
   'ocean-serenade':{ink:'#f5fbf5',muted:'#d5ece7'},
 };
 
-const PETAL_THEMES = new Set(['eternal-bloom', 'sakura-reverie', 'floral-romance', 'marigold-mandap']);
-
-function ThemeMotion({ themeId, reduced }) {
-  if (reduced) return null;
-  return <div className={`invite-theme-motion invite-theme-motion--${themeId}`} aria-hidden="true">
-    {PETAL_THEMES.has(themeId) && <>
-      <FloatingPetals count={themeId === 'marigold-mandap' ? 12 : 16} color={themeId === 'marigold-mandap' ? '#f4a62a' : '#e9a6b4'} />
-      <FloatingPetals count={8} color={themeId === 'marigold-mandap' ? '#ffd56a' : '#fff0e7'} className="invite-petals-back" />
-    </>}
-    {themeId === 'midnight-vows' && <ParticleField count={38} color="#e6c477" mode="gold-converge" />}
-    {(themeId === 'celestial-promise' || themeId === 'celestial-romance') && <>
-      <ParticleField count={34} color="#eee5ff" mode="star-shimmer" />
-      <ConstellationStars starCount={74} lineCount={12} />
-    </>}
-    {themeId === 'cinema-paradiso' && <FilmGrain opacity={0.13} />}
-    {themeId === 'tuscan-romance' && <SunsetMotion />}
-  </div>;
-}
-
-function SunsetMotion() {
-  return <>
-    <motion.div className="invite-sunset-halo" initial={{ opacity: 0 }} animate={{ opacity: [0, .7, .46, .62] }} transition={{ duration: 18, times: [0, .18, .72, 1], ease: 'easeInOut' }} />
-    <motion.div className="invite-sunset-disc" initial={{ opacity: 0, y: -30, scale: .86 }} animate={{ opacity: [.9, .95, .82], y: [-30, 0, 38], scale: [.86, 1, 1.05] }} transition={{ duration: 20, times: [0, .48, 1], ease: 'easeInOut' }} />
-  </>;
-}
-
 // Theme-specific choreography echoes the original reveals while sharing the invitation artwork.
 const CHOREOGRAPHY = {
   'eternal-bloom':{ name:{opacity:0,y:28,filter:'blur(10px)'}, card:{opacity:0,y:48,rotateX:10,scale:.94}, delay:.5, duration:1.05 },
@@ -108,7 +79,6 @@ function initialOf(name) {
 
 function Atmosphere({ themeId, art }) {
   const reduceMotion = useReducedMotion();
-  const count = art.motif === 'stars' ? 24 : art.motif === 'petals' || art.motif === 'marigolds' ? 11 : 0;
   return <motion.div className={`invite-atmosphere invite-atmosphere--${art.motif}`} aria-hidden="true"
     style={{backgroundImage:`linear-gradient(180deg,rgba(16,12,18,.06),rgba(16,12,18,.02) 45%,rgba(16,12,18,.12)),url(${BACKDROPS[themeId] || BACKDROPS['eternal-bloom']})`,backgroundSize:'cover,cover',backgroundPosition:'center,center'}}
     initial={reduceMotion?false:{opacity:0,scale:1.08}}
@@ -116,12 +86,7 @@ function Atmosphere({ themeId, art }) {
     transition={reduceMotion?{duration:0}:{opacity:{duration:1.5},scale:{duration:28,repeat:Infinity,ease:'linear'},x:{duration:28,repeat:Infinity,ease:'linear'}}}>
     <div className="invite-sky" />
     <div className="invite-vignette" />
-    {count > 0 && Array.from({length:count},(_,i)=><motion.i key={i} style={{'--i':i,'--seed':`${(i*37+themeId.length*19)%100}%`}} initial={reduceMotion?false:{opacity:0,y:30,rotate:-18}} animate={reduceMotion?{opacity:.16,y:0,x:0,rotate:0}:{opacity:[0,.72,.34],y:[36,-26,-80],x:[0,i%2?24:-24,8],rotate:[-22,18,52]}} transition={reduceMotion?{duration:0}:{delay:.45+i*.11,duration:8+i*.34,repeat:Infinity,ease:'easeInOut'}} />)}
     {themeId === 'eternal-bloom' && <><Flower2 className="invite-bloom invite-bloom--left" strokeWidth={0.7}/><Flower2 className="invite-bloom invite-bloom--right" strokeWidth={0.7}/></>}
-    {art.motif === 'olive' || art.motif === 'leaves' ? <motion.svg className="invite-branch" viewBox="0 0 260 500" animate={reduceMotion?undefined:{rotate:[-1.5,1.5,-1.5],y:[0,-5,0]}} transition={{duration:9,repeat:Infinity,ease:'easeInOut'}}><path d="M15 490C95 380 55 270 150 170S200 65 245 10"/><path d="M54 408c-52-11-61-43-58-72 42 4 63 28 58 72Zm28-72c-4-50 22-73 50-83 13 41-5 70-50 83Zm32-85c-44-20-47-54-37-81 39 13 54 42 37 81Zm33-67c-4-47 23-67 49-75 11 38-7 64-49 75Zm26-65c-34-22-34-50-22-72 31 14 41 38 22 72Z"/></motion.svg> : null}
-    {art.motif === 'waves' ? <motion.svg className="invite-wave" viewBox="0 0 1440 320" animate={reduceMotion?undefined:{y:[0,-9,0]}} transition={{duration:6,repeat:Infinity,ease:'easeInOut'}}><path d="M0 180Q180 80 360 180t360 0 360 0 360 0v140H0Z"/><path d="M0 225Q180 125 360 225t360 0 360 0 360 0v95H0Z"/></motion.svg> : null}
-    {art.motif === 'film' ? <div className="invite-film-edge"><span>✦ &nbsp; 17 FEBRUARY 2027 &nbsp; ✦</span></div> : null}
-    {art.motif === 'ornate' ? <div className="invite-ornament">❧<span>❦</span>❧</div> : null}
   </motion.div>;
 }
 

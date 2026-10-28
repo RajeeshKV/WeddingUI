@@ -10,13 +10,21 @@ const ATTENDANCE = [
   { value: 'NotAttending', label: 'Regretfully declines' },
 ];
 
-export function RSVP({ weddingConfig = null }) {
-  const rsvpEnabled = weddingConfig ? weddingConfig.rsvpEnabled : true; // default open in demo
+const skelStyle = (w) => ({
+  display: 'inline-block', width: w, height: '0.85em',
+  background: 'linear-gradient(90deg,#E0D8E8 25%,#CEC4D8 50%,#E0D8E8 75%)',
+  backgroundSize: '200% 100%',
+  animation: 'rsvpSkel 1.5s ease-in-out infinite',
+  borderRadius: 3, verticalAlign: 'middle',
+});
+
+export function RSVP({ weddingConfig = null, loading = false }) {
+  const rsvpEnabled = weddingConfig ? weddingConfig.rsvpEnabled : true;
   const hasSlug     = Boolean(import.meta.env.VITE_WEDDING_SLUG);
 
   const [form, setForm]        = useState({ name: '', email: '', phone: '', attendance: 'Attending', guests: '2', message: '' });
   const [submitted, setSubmit] = useState(false);
-  const [loading,   setLoading]= useState(false);
+  const [isSubmitting, setLoading] = useState(false);
   const [errors,    setErrors] = useState({});
   const [apiError,  setApiErr] = useState('');
 
@@ -81,11 +89,19 @@ export function RSVP({ weddingConfig = null }) {
             <CalendarDays size={18} aria-hidden="true" />
             <span>
               <strong>
-                {weddingConfig?.eventDateUtc
-                  ? new Date(weddingConfig.eventDateUtc).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
-                  : '17 February 2027'}
+                {loading
+                  ? <span style={skelStyle(100)} aria-hidden="true" />
+                  : weddingConfig?.eventDateUtc
+                    ? new Date(weddingConfig.eventDateUtc).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
+                    : null
+                }
               </strong>
-              <small>{weddingConfig?.venue || 'Bangalore, India'}</small>
+              <small>
+                {loading
+                  ? <span style={skelStyle(80)} aria-hidden="true" />
+                  : weddingConfig?.venue || null
+                }
+              </small>
             </span>
           </div>
           <div className="signature">Can't wait to see you!</div>
@@ -202,8 +218,8 @@ export function RSVP({ weddingConfig = null }) {
                     <p className="field-error" role="alert" style={{ marginTop: 8 }}>{apiError}</p>
                   )}
 
-                  <button type="submit" className="btn btn-primary submit-btn" disabled={loading}>
-                    {loading ? 'Sending…' : <>Send RSVP <ArrowUpRight size={15} aria-hidden="true" /></>}
+                  <button type="submit" className="btn btn-primary submit-btn" disabled={isSubmitting}>
+                    {isSubmitting ? 'Sending…' : <>Send RSVP <ArrowUpRight size={15} aria-hidden="true" /></>}
                   </button>
 
                   {!hasSlug && (
@@ -215,6 +231,7 @@ export function RSVP({ weddingConfig = null }) {
           )}
         </motion.div>
       </div>
+      <style>{`@keyframes rsvpSkel{0%{background-position:200% 0}100%{background-position:-200% 0}}`}</style>
     </section>
   );
 }

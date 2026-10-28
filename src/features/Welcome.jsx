@@ -2,7 +2,26 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { AmbientCanvas } from '../components/background/AmbientCanvas.jsx';
 
-export function Welcome() {
+function InlineSkel({ w = 100 }) {
+  return (
+    <span style={{
+      display: 'inline-block', width: w, height: '0.9em',
+      background: 'linear-gradient(90deg,#E8E0EC 25%,#D4C8DC 50%,#E8E0EC 75%)',
+      backgroundSize: '200% 100%',
+      animation: 'welcomeSkel 1.5s ease-in-out infinite',
+      borderRadius: 4, verticalAlign: 'middle',
+    }} aria-hidden="true" />
+  );
+}
+
+export function Welcome({ weddingConfig = null, loading = false }) {
+  // Parse names from config
+  let names = null;
+  if (!loading && weddingConfig?.name) {
+    const m = weddingConfig.name.match(/^(.+?)\s*&\s*(.+?)(?:\s+Wedding)?$/i);
+    names = m ? `${m[1].trim()} & ${m[2].trim()}` : weddingConfig.name.replace(/\s*Wedding\s*$/i, '').trim();
+  }
+
   return (
     <section
       className="welcome section-pad"
@@ -55,22 +74,33 @@ export function Welcome() {
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.7, delay: 0.5, type: 'spring', stiffness: 100 }}
-          aria-label="Signed: With love, Aarav and Siya"
+          aria-label={names ? `With love, ${names}` : undefined}
         >
-          With love, Aarav <span className="couple-ampersand">&amp;</span> Siya
+          {loading
+            ? <>With love, <InlineSkel w={120} /></>
+            : names
+              ? `With love, ${names}`
+              : null
+          }
         </motion.div>
 
         <motion.div
-          className="flourish"
-          aria-hidden="true"
+          className="flourish" aria-hidden="true"
           initial={{ opacity: 0, rotate: 0, scale: 0.6 }}
           whileInView={{ opacity: 1, rotate: 14, scale: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.9, delay: 0.6, type: 'spring', stiffness: 80 }}
         >
-          ❧
+          *
         </motion.div>
       </motion.div>
+
+      <style>{`
+        @keyframes welcomeSkel {
+          0%   { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
+      `}</style>
     </section>
   );
 }

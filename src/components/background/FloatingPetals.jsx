@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useMemo } from 'react';
 
 const PETAL_SHAPES = [
   // Cherry blossom / round petal
@@ -25,7 +25,7 @@ function createPetal(index, color, count) {
 }
 
 export function FloatingPetals({ count = 18, color = '#D4889A', className = '' }) {
-  const petals = Array.from({ length: count }, (_, i) => createPetal(i, color, count));
+  const petals = useMemo(() => Array.from({ length: count }, (_, i) => createPetal(i, color, count)), [count, color]);
 
   return (
     <div

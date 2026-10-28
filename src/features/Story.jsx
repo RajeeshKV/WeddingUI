@@ -5,11 +5,12 @@ import { AmbientCanvas } from '../components/background/AmbientCanvas.jsx';
 const storyPhoto  = 'https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=1100&q=85';
 const storyPhoto2 = 'https://images.unsplash.com/photo-1537633552985-df8429e8048b?auto=format&fit=crop&w=1000&q=85';
 
+// Timeline dates and content are editorial copy — not derived from API
 const TIMELINE = [
-  { n: '01', date: 'JANUARY 2020',  title: 'The first hello',     body: "A chance meeting, a long conversation, and a feeling we couldn't quite explain." },
-  { n: '02', date: 'MARCH 2021',    title: 'Our first adventure', body: 'New places, terrible directions, and memories we still talk about.' },
-  { n: '03', date: 'DECEMBER 2024', title: 'The big question',    body: 'One little question. One very happy yes.' },
-  { n: '04', date: 'FEBRUARY 2027', title: 'Our forever',         body: 'And now, the best part begins — with all of you.' },
+  { n: '01', date: 'THE BEGINNING',      title: 'The first hello',     body: 'A chance meeting, a long conversation, and a feeling we could not quite explain.' },
+  { n: '02', date: 'OUR FIRST ADVENTURE',title: 'Something new',       body: 'New places, terrible directions, and memories we still talk about.' },
+  { n: '03', date: 'A QUIET EVENING',    title: 'The big question',    body: 'One little question. One very happy yes.' },
+  { n: '04', date: 'VERY SOON',          title: 'Our forever',         body: 'And now, the best part begins — with all of you.' },
 ];
 
 export function Story() {
@@ -59,11 +60,11 @@ export function Story() {
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.95, ease: [0.2, 0.8, 0.2, 1] }}
         >
-          <img src={storyPhoto} alt="Aarav and Siya at the beginning of their journey" loading="lazy" />
+          <img src={storyPhoto} alt="The couple at the beginning of their journey" loading="lazy" />
           <figcaption>Somewhere, it all began.</figcaption>
         </motion.figure>
 
-        <div className="timeline" role="list" aria-label="Our love story timeline">
+        <div className="timeline" role="list" aria-label="Love story timeline">
           {TIMELINE.map((item, i) => (
             <motion.div
               key={item.n}
@@ -91,8 +92,8 @@ export function Story() {
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.85, ease: [0.2, 0.8, 0.2, 1] }}
         >
-          <img src={storyPhoto2} alt="A cherished moment from Aarav and Siya's story" loading="lazy" />
-          <figcaption>And the story continues…</figcaption>
+          <img src={storyPhoto2} alt="A cherished moment from their story" loading="lazy" />
+          <figcaption>And the story continues.</figcaption>
         </motion.figure>
       </div>
     </section>

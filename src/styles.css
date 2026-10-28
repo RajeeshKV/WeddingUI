@@ -1976,3 +1976,29 @@ h1 em, h2 em, h3 em {
 @media(prefers-reduced-motion:reduce){.eb-petal-field{display:none}.eternal-intro__backdrop{will-change:auto}.eternal-intro__open,.eternal-intro__open:before{transition:none}}
 @media(max-height:700px){.eternal-intro__stage{min-height:0}}
 @media(max-width:640px) and (max-height:680px){.eternal-intro__stage{padding:10px 14px 42px}.eternal-intro__eyebrow{margin-bottom:5px}.eternal-intro__ornament{height:18px}.eternal-intro__names{font-size:clamp(38px,10vw,55px)}.eternal-intro__names em{font-size:clamp(38px,10vw,54px)}.eternal-intro__tagline{margin:6px 0 10px}.eternal-envelope{height:clamp(145px,27vh,185px)}.eternal-wax{width:68px;height:66px}.eternal-intro__open{margin-top:10px;min-height:46px}.eternal-intro__date{margin-top:9px}.eternal-intro__date strong{margin-top:7px}.eternal-intro__date small{margin-top:4px}}
+
+/* ── Intro name skeleton ─────────────────────────────────── */
+.invite-name-skel {
+  display: inline-block;
+  width: clamp(90px, 14vw, 160px);
+  height: 0.85em;
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.12) 25%,
+    rgba(255,255,255,0.28) 50%,
+    rgba(255,255,255,0.12) 75%
+  );
+  background-size: 200% 100%;
+  animation: nameSkelShimmer 1.6s ease-in-out infinite;
+  vertical-align: middle;
+}
+
+@keyframes nameSkelShimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .invite-name-skel { animation: none; opacity: 0.25; }
+}

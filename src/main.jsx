@@ -114,7 +114,8 @@ function MainSite({ initialThemeId = DEFAULT_THEME }) {
   }, []);
 
   return (
-        <div className={`site ${activeTheme.cssClass}`}>
+    <div className={`site ${activeTheme.cssClass}`}>
+      {/* Intro overlay — always rendered on top while visible */}
       <IntroDispatcher
         themeId={activeThemeId}
         visible={introVisible}
@@ -122,43 +123,60 @@ function MainSite({ initialThemeId = DEFAULT_THEME }) {
         coupleName={config?.name}
       />
 
-      <Nav
-        onScrollTo={scrollTo}
-        weddingConfig={config}
-      />
+      {/*
+        Site body — rendered but visually hidden while intro is showing.
+        visibility:hidden collapses paint without unmounting DOM (avoids
+        layout thrash when intro exits). pointer-events:none prevents
+        any accidental interaction through the intro overlay.
+      */}
+      <div
+        aria-hidden={introVisible ? 'true' : undefined}
+        style={{
+          visibility: introVisible ? 'hidden' : 'visible',
+          pointerEvents: introVisible ? 'none' : 'auto',
+          // Prevent any focus reaching site links while intro is active
+          ...(introVisible ? { tabIndex: -1 } : {}),
+        }}
+      >
+        <Nav
+          onScrollTo={scrollTo}
+          weddingConfig={config}
+        />
 
-      <main id="main-content">
-        <Hero       timeLeft={timeLeft} onScrollTo={scrollTo} weddingConfig={config} loading={dataLoading} themeId={activeThemeId} />
-        <Welcome    weddingConfig={config} loading={dataLoading} />
-        <Story      photos={gallery} />
-        <Events     apiEvents={events}   onScrollTo={scrollTo} />
-        <Gallery    weddingConfig={config} />
-        <RSVP       weddingConfig={config} loading={dataLoading} />
-        <Travel     weddingConfig={config} loading={dataLoading} />
-      </main>
+        <main id="main-content">
+          <Hero       timeLeft={timeLeft} onScrollTo={scrollTo} weddingConfig={config} loading={dataLoading} themeId={activeThemeId} />
+          <Welcome    weddingConfig={config} loading={dataLoading} />
+          <Story      photos={gallery} />
+          <Events     apiEvents={events}   onScrollTo={scrollTo} />
+          <Gallery    weddingConfig={config} />
+          <RSVP       weddingConfig={config} loading={dataLoading} />
+          <Travel     weddingConfig={config} loading={dataLoading} />
+        </main>
 
-      <SiteFooter weddingConfig={config} loading={dataLoading} />
+        <SiteFooter weddingConfig={config} loading={dataLoading} />
 
-      <AnimatePresence>
-        {showTop && (
-          <motion.button
-            className="floating-top"
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            aria-label="Back to top"
-            initial={{ opacity: 0, y: 16, scale: 0.85 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 12, scale: 0.85 }}
-            transition={{ duration: 0.3, type: 'spring', stiffness: 260, damping: 20 }}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.92 }}
-          >
-            <ArrowUp size={18} aria-hidden="true" />
-          </motion.button>
-        )}
-      </AnimatePresence>
+        <AnimatePresence>
+          {showTop && (
+            <motion.button
+              className="floating-top"
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              aria-label="Back to top"
+              initial={{ opacity: 0, y: 16, scale: 0.85 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 12, scale: 0.85 }}
+              transition={{ duration: 0.3, type: 'spring', stiffness: 260, damping: 20 }}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.92 }}
+            >
+              <ArrowUp size={18} aria-hidden="true" />
+            </motion.button>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
+
 
 /* ─── App router ───────────────────────────────────────────── */
 function App() {

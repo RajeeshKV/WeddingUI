@@ -249,6 +249,15 @@ export function GalleryPage() {
   useEffect(() => { load(); }, [load]);
 
   const columns = buildColumns(photos, columnCount);
+
+  // Skeleton style for logo initials
+  const logoSkelStyle = (w) => ({
+    display: 'inline-block', width: w, height: '0.85em',
+    background: 'linear-gradient(90deg,#E8E0D0 25%,#D4CCBF 50%,#E8E0D0 75%)',
+    backgroundSize: '200% 100%',
+    animation: 'logoSkel 1.5s ease-in-out infinite',
+    borderRadius: 3, verticalAlign: 'middle',
+  });
   // Names and date — only render when config is loaded (no fallback placeholder)
   const nameParts = (() => {
     if (!config?.name) return null;
@@ -285,9 +294,27 @@ export function GalleryPage() {
             fontFamily: "'Cormorant Garamond',Georgia,serif",
             fontSize: 26, fontWeight: 600, letterSpacing: '-0.06em',
             color: 'var(--t-fg,#26372C)', textDecoration: 'none', lineHeight: 1,
+            minWidth: 48, display: 'inline-block',
           }}
           aria-label="Return home">
-          A<span className="couple-ampersand" style={{ color: '#8B6E7F', margin: '0 1px' }}>&amp;</span>S
+          {loading || !config?.name
+            ? (
+              // Skeleton while config loads — two small blocks representing initials
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }} aria-hidden="true">
+                <span style={logoSkelStyle(22)} />
+                <span style={{ color: '#C4A6B2', fontSize: 16, lineHeight: 1 }}>&amp;</span>
+                <span style={logoSkelStyle(22)} />
+              </span>
+            )
+            : (() => {
+                const m = config.name.match(/^(.+?)\s*&\s*(.+?)(?:\s+Wedding)?$/i);
+                const i1 = m ? Array.from(m[1].trim())[0] : Array.from(config.name.trim())[0];
+                const i2 = m ? Array.from(m[2].trim())[0] : null;
+                return i2
+                  ? <>{i1}<span style={{ color: '#8B6E7F', margin: '0 1px' }}>&amp;</span>{i2}</>
+                  : i1;
+              })()
+          }
         </a>
 
         <nav aria-label="Gallery navigation"
@@ -431,6 +458,7 @@ export function GalleryPage() {
 
       <style>{`
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes logoSkel { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
         @keyframes shimmer {
           0%   { background-position: 200% 0; }
           100% { background-position: -200% 0; }

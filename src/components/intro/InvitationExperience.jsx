@@ -66,12 +66,12 @@ const CHOREOGRAPHY = {
 };
 
 function getPartnerNames(coupleName) {
-  const fallback = ['Aarav', 'Siya'];
-  if (typeof coupleName !== 'string' || !coupleName.trim()) return fallback;
+  // Return null if no data yet — callers must handle null
+  if (typeof coupleName !== 'string' || !coupleName.trim()) return null;
   const parts = coupleName.trim().replace(/\s+wedding\s*$/i, '').split(/\s*&\s*|\s+and\s+/i);
   return parts.length >= 2 && parts[0].trim() && parts.slice(1).join(' & ').trim()
     ? [parts[0].trim(), parts.slice(1).join(' & ').trim()]
-    : fallback;
+    : [coupleName.trim()];
 }
 
 function initialOf(name) {
@@ -95,24 +95,97 @@ export function InvitationExperience({ themeId, onOpen, coupleName }) {
   const art = ART[themeId] || ART['eternal-bloom'];
   const choreography = CHOREOGRAPHY[themeId] || CHOREOGRAPHY['eternal-bloom'];
   const contrast = CONTRAST_INK[themeId] || {};
-  const [partnerOne, partnerTwo] = getPartnerNames(coupleName);
-  const monogram = `${initialOf(partnerOne)}&${initialOf(partnerTwo)}`;
   const reduceMotion = useReducedMotion();
   const [opening, setOpening] = useState(false);
-  const open = () => { if (opening) return; setOpening(true); window.setTimeout(onOpen, reduceMotion ? 0 : 1050); };
-  return <IntroShell onOpen={open}>
-    <div className={`invitation-experience theme-intro-${themeId}`} style={{'--intro-ink':contrast.ink||art.ink,'--intro-muted':contrast.muted||art.muted,'--intro-paper':art.paper,'--intro-paper-shade':art.paper2,'--intro-seal':art.seal,'--intro-accent':art.accent}}>
-      <Atmosphere themeId={themeId} art={art}/>
-      <ThemeMotion themeId={themeId} reduced={reduceMotion} />
-      <motion.div className="invite-composition" initial={reduceMotion?false:{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{duration:reduceMotion?0:0.9,ease:[0.2,0.75,0.2,1]}}>
-        <motion.p className="invite-eyebrow" initial={reduceMotion?false:{opacity:0,letterSpacing:'0.5em',y:8}} animate={{opacity:1,letterSpacing:'0.32em',y:0}} transition={{delay:0.25,duration:reduceMotion?0:1}}>{art.eyebrow}</motion.p>
-        <motion.h1 className="invite-names" initial={reduceMotion?false:choreography.name} animate={{opacity:1,y:0,x:0,scale:1,rotate:0,rotateZ:0,rotateX:0,rotateY:0,filter:'blur(0px)',clipPath:'inset(0 0 0% 0)'}} transition={{delay:reduceMotion?0:choreography.delay,duration:reduceMotion?0:choreography.duration,ease:[0.2,0.8,0.2,1]}}><span className="invite-name-part">{partnerOne}</span><em className="couple-ampersand">&amp;</em><span className="invite-name-part">{partnerTwo}</span></motion.h1>
-        <motion.p className="invite-deck" initial={reduceMotion?false:{opacity:0,y:8}} animate={{opacity:1,y:0}} transition={{delay:.72,duration:reduceMotion?0:.8}}>{art.line}</motion.p>
-        <InvitationLetter opening={opening} onOpen={open} monogram={monogram} entrance={choreography.card} entranceDelay={Math.max(.82,choreography.delay+.2)} entranceDuration={choreography.duration} />
-      </motion.div>
-    </div>
-  </IntroShell>;
-}
 
-export default InvitationExperience;
+  // Null while API is loading — no hardcoded fallback
+  const names = getPartnerNames(coupleName); // null | [string, string?]
+  const namesReady = names !== null;
+  const partnerOne = namesReady ? names[0] : null;
+  const partnerTwo = namesReady ? (names[1] ?? null) : null;
+  const monogram   = namesReady
+    ? `${initialOf(names[0])}${names[1] ? '&' + initialOf(names[1]) : ''}`
+    : '·';
+
+  const open = () => {
+    if (opening) return;
+    setOpening(true);
+    window.setTimeout(onOpen, reduceMotion ? 0 : 1050);
+  };
+
+  return (
+    <IntroShell onOpen={open}>
+      <div
+        className={`invitation-experience theme-intro-${themeId}`}
+        style={{
+          '--intro-ink':         contrast.ink   || art.ink,
+          '--intro-muted':       contrast.muted || art.muted,
+          '--intro-paper':       art.paper,
+          '--intro-paper-shade': art.paper2,
+          '--intro-seal':        art.seal,
+          '--intro-accent':      art.accent,
+        }}
+      >
+        <Atmosphere themeId={themeId} art={art} />
+        <ThemeMotion themeId={themeId} reduced={reduceMotion} />
+
+        <motion.div
+          className="invite-composition"
+          initial={reduceMotion ? false : { opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: reduceMotion ? 0 : 0.9, ease: [0.2, 0.75, 0.2, 1] }}
+        >
+          <motion.p
+            className="invite-eyebrow"
+            initial={reduceMotion ? false : { opacity: 0, letterSpacing: '0.5em', y: 8 }}
+            animate={{ opacity: 1, letterSpacing: '0.32em', y: 0 }}
+            transition={{ delay: 0.25, duration: reduceMotion ? 0 : 1 }}
+          >
+            {art.eyebrow}
+          </motion.p>
+
+          {/* Names — skeleton while API loading, never show placeholder text */}
+          <motion.h1
+            className="invite-names"
+            initial={reduceMotion ? false : choreography.name}
+            animate={{ opacity: 1, y: 0, x: 0, scale: 1, rotate: 0, rotateZ: 0, rotateX: 0, rotateY: 0, filter: 'blur(0px)', clipPath: 'inset(0 0 0% 0)' }}
+            transition={{ delay: reduceMotion ? 0 : choreography.delay, duration: reduceMotion ? 0 : choreography.duration, ease: [0.2, 0.8, 0.2, 1] }}
+          >
+            {!namesReady ? (
+              /* Skeleton shimmers — two blocks representing the names */
+              <>
+                <span className="invite-name-skel" aria-hidden="true" />
+                <em className="couple-ampersand" style={{ opacity: 0.3 }}>&amp;</em>
+                <span className="invite-name-skel" aria-hidden="true" />
+              </>
+            ) : (
+              <>
+                <span className="invite-name-part">{partnerOne}</span>
+                {partnerTwo && <><em className="couple-ampersand">&amp;</em><span className="invite-name-part">{partnerTwo}</span></>}
+              </>
+            )}
+          </motion.h1>
+
+          <motion.p
+            className="invite-deck"
+            initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.72, duration: reduceMotion ? 0 : 0.8 }}
+          >
+            {art.line}
+          </motion.p>
+
+          <InvitationLetter
+            opening={opening}
+            onOpen={open}
+            monogram={monogram}
+            entrance={choreography.card}
+            entranceDelay={Math.max(0.82, choreography.delay + 0.2)}
+            entranceDuration={choreography.duration}
+          />
+        </motion.div>
+      </div>
+    </IntroShell>
+  );
+}
 

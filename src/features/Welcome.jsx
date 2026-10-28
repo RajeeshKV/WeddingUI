@@ -57,7 +57,7 @@ export function Welcome() {
           transition={{ duration: 0.7, delay: 0.5, type: 'spring', stiffness: 100 }}
           aria-label="Signed: With love, Aarav and Siya"
         >
-          With love, Aarav &amp; Siya
+          With love, Aarav <span className="couple-ampersand">&amp;</span> Siya
         </motion.div>
 
         <motion.div

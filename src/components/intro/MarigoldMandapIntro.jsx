@@ -92,7 +92,7 @@ export function MarigoldMandapIntro({ onOpen }) {
           variants={{ hidden:{ opacity:0, y:28, filter:'blur(10px)' }, visible:{ opacity:1, y:0, filter:'blur(0px)' } }}
           transition={{ duration:1.0, ease:[0.2,0.8,0.2,1] }}
         >
-          Aarav <em style={{ fontStyle:'italic',color:'#CC4B2C' }}>&amp;</em> Siya
+          Aarav <em className="couple-ampersand" style={{ color:'#CC4B2C' }}>&amp;</em> Siya
         </motion.h1>
         <motion.p
           style={{ fontSize:9,letterSpacing:'0.22em',color:'#8B3A1A',marginTop:10,
@@ -128,7 +128,7 @@ export function MarigoldMandapIntro({ onOpen }) {
           CORDIALLY INVITES YOU
         </p>
         <p style={{ fontFamily:'var(--font-serif)',fontSize:'clamp(18px,3vw,24px)',fontWeight:600,color:'#3A1A08',margin:'0 0 5px',lineHeight:1.4 }}>
-          Aarav &amp; Siya's Wedding
+          Aarav <span className="couple-ampersand">&amp;</span> Siya's Wedding
         </p>
         <p style={{ fontSize:8,color:'#7A4A2A',letterSpacing:'0.15em',margin:'0 0 14px',fontFamily:"'Jost',sans-serif" }}>
           17 · 02 · 2027 · BANGALORE

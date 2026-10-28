@@ -109,7 +109,7 @@ export function CinemaParadisoIntro({ onOpen }) {
           variants={{ hidden:{ opacity:0, y:32, filter:'blur(12px)' }, visible:{ opacity:1, y:0, filter:'blur(0px)' } }}
           transition={{ duration:1.1, ease:[0.2,0.8,0.2,1] }}
         >
-          Aarav <em style={{ fontStyle:'italic',color:'#C4977A' }}>&amp;</em> Siya
+          Aarav <em className="couple-ampersand" style={{ color:'#C4977A' }}>&amp;</em> Siya
         </motion.h1>
         <motion.p
           style={{ fontSize:9,letterSpacing:'0.22em',color:'rgba(200,160,100,0.62)',marginTop:10,
@@ -146,7 +146,7 @@ export function CinemaParadisoIntro({ onOpen }) {
               color:'rgba(240,220,180,0.92)',fontFamily:'var(--font-serif)',
               fontSize:17,fontStyle:'italic',fontWeight:600,
               textShadow:'0 1px 10px rgba(0,0,0,0.6)' }}>
-              Aarav &amp; Siya
+              Aarav <span className="couple-ampersand">&amp;</span> Siya
             </div>
           </div>
           <p style={{ textAlign:'center',margin:'10px 0 0',fontSize:8,letterSpacing:'0.22em',

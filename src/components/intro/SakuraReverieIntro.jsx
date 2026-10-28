@@ -58,7 +58,7 @@ export function SakuraReverieIntro({ onOpen }) {
           variants={{ hidden:{ opacity:0, y:30, filter:'blur(10px)' }, visible:{ opacity:1, y:0, filter:'blur(0px)' } }}
           transition={{ duration:1.0, ease:[0.2,0.8,0.2,1] }}
         >
-          Aarav <em style={{ fontStyle:'italic',color:'#D4889A' }}>&amp;</em> Siya
+          Aarav <em className="couple-ampersand" style={{ color:'#D4889A' }}>&amp;</em> Siya
         </motion.h1>
         <motion.p
           style={{ fontSize:9,letterSpacing:'0.24em',color:'#8B4D6B',marginTop:10,
@@ -97,7 +97,7 @@ export function SakuraReverieIntro({ onOpen }) {
           17 · FEBRUARY · 2027
         </p>
         <p style={{ fontFamily:'var(--font-serif)',fontSize:20,fontWeight:600,color:'#3D1F2D',margin:'0 0 5px' }}>
-          Aarav &amp; Siya's Wedding
+          Aarav <span className="couple-ampersand">&amp;</span> Siya's Wedding
         </p>
         <p style={{ fontSize:9,color:'#8B4D6B',letterSpacing:'0.08em',fontFamily:"'Jost',sans-serif" }}>
           Bangalore · Tap to open invitation

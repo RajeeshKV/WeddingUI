@@ -270,7 +270,7 @@ export function GalleryPage() {
             color: 'var(--t-fg,#26372C)', textDecoration: 'none', lineHeight: 1,
           }}
           aria-label="Return home">
-          A<span style={{ fontSize: 17, color: '#8B6E7F', margin: '0 1px' }}>&amp;</span>S
+          A<span className="couple-ampersand" style={{ color: '#8B6E7F', margin: '0 1px' }}>&amp;</span>S
         </a>
 
         <nav aria-label="Gallery navigation"
@@ -378,7 +378,7 @@ export function GalleryPage() {
           {coupleName.includes('&') ? (
             <>
               {coupleName.split('&')[0].trim()}
-              {' '}<em style={{ fontStyle: 'italic', opacity: 0.75 }}>&amp;</em>{' '}
+              {' '}<em className="couple-ampersand" style={{ opacity: 0.75 }}>&amp;</em>{' '}
               {coupleName.split('&')[1]?.trim()}
             </>
           ) : coupleName}

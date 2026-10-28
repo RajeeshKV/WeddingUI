@@ -6,12 +6,12 @@ export function Nav({ onScrollTo, weddingConfig = null }) {
   const [scrolled, setScrolled] = useState(false);
   const navRef = useRef(null);
 
-  // Derive monogram from config name — e.g. "Rahul & Priya Wedding" → "R&P"
+  // Derive a couple-specific wordmark from configured names.
   const monogram = (() => {
-    if (!weddingConfig?.name) return null;
-    const match = weddingConfig.name.match(/^(.+?)\s*&\s*(.+?)(?:\s+Wedding)?$/i);
-    if (match) return `${match[1].trim()[0]}&${match[2].trim()[0]}`;
-    return null;
+    if (!weddingConfig?.name?.trim()) return ['A', 'S'];
+    const parts = weddingConfig.name.trim().replace(/\s+wedding\s*$/i, '').split(/\s*&\s*|\s+and\s+/i);
+    if (parts.length < 2 || !parts[0].trim() || !parts.slice(1).join(' ').trim()) return ['A', 'S'];
+    return [parts[0].trim(), parts.slice(1).join(' ').trim()].map((name) => Array.from(name)[0].toLocaleUpperCase());
   })();
 
   useEffect(() => {
@@ -54,12 +54,18 @@ export function Nav({ onScrollTo, weddingConfig = null }) {
       <button
         className="nav-monogram"
         onClick={() => onScrollTo('home')}
-        aria-label="Scroll to top"
+        aria-label={`Scroll to top, ${monogram[0]} and ${monogram[1]}`}
       >
-        {monogram
-          ? <>{monogram.split('&')[0]}<span>&amp;</span>{monogram.split('&')[1]}</>
-          : <>A<span>&amp;</span>S</>
-        }
+        <span className="nav-logo-type">
+          <span className="nav-logo-initials">
+            <span>{monogram[0]}</span><i className="nav-logo-ampersand">&amp;</i><span>{monogram[1]}</span>
+          </span>
+          <span className="nav-logo-ornament" aria-hidden="true">
+            <span />
+            <span className="nav-logo-heart">♡</span>
+            <span />
+          </span>
+        </span>
       </button>
 
       {/* Desktop + mobile nav links */}

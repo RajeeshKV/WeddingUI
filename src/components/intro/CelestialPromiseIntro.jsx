@@ -105,7 +105,7 @@ export function CelestialPromiseIntro({ onOpen }) {
           variants={{ hidden:{ opacity:0, y:32, filter:'blur(12px)' }, visible:{ opacity:1, y:0, filter:'blur(0px)' } }}
           transition={{ duration:1.1, ease:[0.2,0.8,0.2,1] }}
         >
-          Aarav <em style={{ fontStyle:'italic',color:'#9BA4E0' }}>&amp;</em> Siya
+          Aarav <em className="couple-ampersand" style={{ color:'#9BA4E0' }}>&amp;</em> Siya
         </motion.h1>
         <motion.div
           style={{ display:'flex',alignItems:'center',justifyContent:'center',gap:10,marginTop:16 }}
@@ -151,7 +151,7 @@ export function CelestialPromiseIntro({ onOpen }) {
           17 · FEBRUARY · 2027
         </p>
         <p style={{ fontFamily:'var(--font-serif)',fontSize:20,fontWeight:600,color:'#F0EEFF',margin:'0 0 5px' }}>
-          Aarav &amp; Siya
+          Aarav <span className="couple-ampersand">&amp;</span> Siya
         </p>
         <p style={{ fontSize:9,color:'rgba(155,164,224,0.55)',letterSpacing:'0.1em',margin:'0 0 14px',fontFamily:"'Jost',sans-serif" }}>
           Bangalore, India

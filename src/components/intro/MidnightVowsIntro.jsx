@@ -63,7 +63,7 @@ export function MidnightVowsIntro({ onOpen }) {
           margin:'0 auto',
           boxShadow:'0 0 50px rgba(201,168,76,0.12)' }}>
           <span style={{ fontFamily:'var(--font-serif)',fontSize:28,fontWeight:600,color:'#C9A84C',letterSpacing:2 }}>
-            A&amp;S
+            A<span className="couple-ampersand">&amp;</span>S
           </span>
         </div>
         <motion.div style={{ position:'absolute',inset:-14,borderRadius:'50%',
@@ -96,7 +96,7 @@ export function MidnightVowsIntro({ onOpen }) {
           variants={{ hidden:{ opacity:0, y:32, filter:'blur(12px)' }, visible:{ opacity:1, y:0, filter:'blur(0px)' } }}
           transition={{ duration:1.0, ease:[0.2,0.8,0.2,1] }}
         >
-          Aarav <em style={{ fontStyle:'italic',color:'#C9A84C',textTransform:'none' }}>&amp;</em> Siya
+          Aarav <em className="couple-ampersand" style={{ color:'#C9A84C',textTransform:'none' }}>&amp;</em> Siya
         </motion.h1>
         <motion.div
           style={{ display:'flex',alignItems:'center',justifyContent:'center',gap:12,margin:'18px 0' }}
@@ -147,7 +147,7 @@ export function MidnightVowsIntro({ onOpen }) {
           margin:'0 auto 18px',display:'flex',alignItems:'center',justifyContent:'center',
           fontFamily:'var(--font-serif)',fontSize:13,fontWeight:600,color:'#F5E8D0',
           boxShadow:'0 4px 16px rgba(201,168,76,0.2)' }}>
-          A&amp;S
+          A<span className="couple-ampersand">&amp;</span>S
         </div>
         <p style={{ fontSize:8,letterSpacing:'0.28em',color:'rgba(201,168,76,0.65)',margin:'0 0 10px',
           fontFamily:"'Jost',sans-serif",fontWeight:500 }}>

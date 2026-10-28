@@ -19,16 +19,39 @@ function Skel({ w = 120, h = '1em', style = {} }) {
   );
 }
 
-const heroPhoto = 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=2200&q=90';
+const HERO_PHOTOS = {
+  'eternal-bloom': 'photo-1519741497674-611481863552',
+  'midnight-vows': 'photo-1511285560929-80b456fea0bc',
+  'marigold-mandap': 'photo-1606800052052-a08af7148866',
+  'tuscan-romance': 'photo-1519225421980-888cb7e6c7c2',
+  'pearl-atelier': 'photo-1519741497674-611481863552',
+  'sakura-reverie': 'photo-1537633552985-df8429e8048b',
+  'secret-garden': 'photo-1522673607200-164d1b6ce486',
+  'ocean-serenade': 'photo-1519225421980-888cb7e6c7c2',
+  'cinema-paradiso': 'photo-1511285560929-80b456fea0bc',
+  'celestial-promise': 'photo-1519741497674-611481863552',
+  'floral-romance': 'photo-1537633552985-df8429e8048b',
+  'modern-luxury': 'photo-1519741497674-611481863552',
+  'royal-heritage': 'photo-1606800052052-a08af7148866',
+  'minimal-editorial': 'photo-1519225421980-888cb7e6c7c2',
+  'celestial-romance': 'photo-1511285560929-80b456fea0bc',
+};
+const heroPhoto = (themeId) => `https://images.unsplash.com/${HERO_PHOTOS[themeId] || HERO_PHOTOS['eternal-bloom']}?auto=format&fit=crop&w=2200&q=90`;
 
-export function Hero({ timeLeft, onScrollTo, weddingConfig = null, loading = false }) {
+export function Hero({ timeLeft, onScrollTo, weddingConfig = null, loading = false, themeId = 'eternal-bloom' }) {
   const hasConfig = !loading && weddingConfig;
 
   // Parse names only when config is ready
-  let name1 = null, name2 = null;
+  let name1 = 'Aarav', name2 = 'Siya';
   if (hasConfig?.name) {
-    const match = hasConfig.name.match(/^(.+?)\s*&\s*(.+?)(?:\s+Wedding)?$/i);
-    if (match) { name1 = match[1].trim(); name2 = match[2].trim(); }
+    const parts = hasConfig.name.trim().replace(/\s+wedding\s*$/i, '').split(/\s*&\s*|\s+and\s+/i);
+    if (parts.length > 1 && parts[0].trim() && parts.slice(1).join(' & ').trim()) {
+      name1 = parts[0].trim();
+      name2 = parts.slice(1).join(' & ').trim();
+    } else if (hasConfig.name.trim()) {
+      name1 = hasConfig.name.trim();
+      name2 = null;
+    }
   }
 
   const eventDate = hasConfig?.eventDateUtc
@@ -45,7 +68,7 @@ export function Hero({ timeLeft, onScrollTo, weddingConfig = null, loading = fal
     <section className="hero" id="home" aria-label="Wedding hero">
       <div
         className="hero-bg" role="img" aria-label="Wedding couple"
-        style={{ backgroundImage: `url(${heroPhoto})` }}
+        style={{ backgroundImage: `url(${heroPhoto(themeId)})` }}
       />
       <div className="hero-shade" aria-hidden="true" />
       <AmbientCanvas mode="petals" opacity={0.55} />
@@ -74,9 +97,7 @@ export function Hero({ timeLeft, onScrollTo, weddingConfig = null, loading = fal
         >
           {loading
             ? <Skel w="60%" h="1em" />
-            : name1
-              ? <>{name1} <em>&amp;</em><br />{name2}</>
-              : <>A <em>&amp;</em><br />S</>
+            : <>{name1}{name2 && <> <em className="couple-ampersand">&amp;</em> {name2}</>}</>
           }
         </motion.h1>
 

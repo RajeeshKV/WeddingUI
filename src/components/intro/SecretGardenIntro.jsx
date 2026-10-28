@@ -56,7 +56,7 @@ export function SecretGardenIntro({ onOpen }) {
           variants={{ hidden:{ opacity:0, y:30, filter:'blur(10px)' }, visible:{ opacity:1, y:0, filter:'blur(0px)' } }}
           transition={{ duration:1.0, ease:[0.2,0.8,0.2,1] }}
         >
-          Aarav <em style={{ fontStyle:'italic',color:'#5C7A5C' }}>&amp;</em> Siya
+          Aarav <em className="couple-ampersand" style={{ color:'#5C7A5C' }}>&amp;</em> Siya
         </motion.h1>
         <motion.p
           style={{ fontSize:9,letterSpacing:'0.22em',color:'#5C7A5C',marginTop:10,
@@ -105,7 +105,7 @@ export function SecretGardenIntro({ onOpen }) {
         <div style={{ display:'flex',justifyContent:'space-between',alignItems:'flex-end' }}>
           <div>
             <p style={{ fontFamily:'var(--font-serif)',fontSize:17,fontStyle:'italic',color:'#3A2D10',margin:0,fontWeight:600 }}>
-              Aarav &amp; Siya
+              Aarav <span className="couple-ampersand">&amp;</span> Siya
             </p>
             <p style={{ fontSize:8,letterSpacing:'0.18em',color:'#7A6A40',margin:'4px 0 0',fontFamily:"'Jost',sans-serif",fontWeight:500 }}>
               BANGALORE, INDIA
@@ -116,7 +116,7 @@ export function SecretGardenIntro({ onOpen }) {
             border:'2px double rgba(196,168,90,0.6)',
             display:'flex',alignItems:'center',justifyContent:'center',
             fontFamily:'var(--font-serif)',fontSize:13,fontWeight:600,color:'#F0E8C8' }}>
-            A&amp;S
+            A<span className="couple-ampersand">&amp;</span>S
           </div>
         </div>
         <p style={{ fontSize:8,color:'#8A7850',textAlign:'center',marginTop:14,letterSpacing:'0.1em',fontFamily:"'Jost',sans-serif" }}>

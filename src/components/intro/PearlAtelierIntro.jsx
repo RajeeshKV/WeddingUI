@@ -225,7 +225,7 @@ export function PearlAtelierIntro({ onOpen }) {
             fontWeight:600, letterSpacing:'-0.04em', color:'#1A1714',
             margin:'0 0 10px', lineHeight:0.95 }}
         >
-          Aarav &amp; Siya
+          Aarav <span className="couple-ampersand">&amp;</span> Siya
         </motion.h1>
 
         {/* Subtitle rule */}
@@ -293,7 +293,7 @@ export function PearlAtelierIntro({ onOpen }) {
 
         <p style={{ fontFamily:'var(--font-serif)', fontSize:'clamp(22px,3.2vw,28px)',
           fontWeight:600, color:'#1A1714', margin:'0 0 4px', lineHeight:1.2 }}>
-          Aarav &amp; Siya
+          Aarav <span className="couple-ampersand">&amp;</span> Siya
         </p>
 
         <p style={{ fontSize:12, color:'#6A6258', margin:'0 0 22px', lineHeight:1.9,
@@ -326,7 +326,7 @@ export function PearlAtelierIntro({ onOpen }) {
             display:'flex', alignItems:'center', justifyContent:'center',
             boxShadow:'inset 0 1px 3px rgba(255,255,255,0.8), 0 2px 6px rgba(60,52,42,0.1)' }}>
             <span style={{ fontFamily:'var(--font-serif)', fontSize:14, fontWeight:600,
-              color:'#6A6258', letterSpacing:'0.02em' }}>A&amp;S</span>
+              color:'#6A6258', letterSpacing:'0.02em' }}>A<span className="couple-ampersand">&amp;</span>S</span>
           </div>
         </div>
 
@@ -365,7 +365,7 @@ export function PearlAtelierIntro({ onOpen }) {
           display:'flex', alignItems:'center', gap:16 }}
       >
         <span style={{ width:28, height:1, background:'#C0B8AE', display:'inline-block' }}/>
-        Aarav &amp; Siya · February 2027
+        Aarav <span className="couple-ampersand">&amp;</span> Siya · February 2027
         <span style={{ width:28, height:1, background:'#C0B8AE', display:'inline-block' }}/>
       </motion.div>
 

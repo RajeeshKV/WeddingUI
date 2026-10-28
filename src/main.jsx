@@ -114,11 +114,12 @@ function MainSite({ initialThemeId = DEFAULT_THEME }) {
   }, []);
 
   return (
-    <div className={`site ${activeTheme.cssClass}`}>
+        <div className={`site ${activeTheme.cssClass}`}>
       <IntroDispatcher
         themeId={activeThemeId}
         visible={introVisible}
         onOpen={handleIntroOpen}
+        coupleName={config?.name}
       />
 
       <Nav
@@ -127,7 +128,7 @@ function MainSite({ initialThemeId = DEFAULT_THEME }) {
       />
 
       <main id="main-content">
-        <Hero       timeLeft={timeLeft} onScrollTo={scrollTo} weddingConfig={config} loading={dataLoading} />
+        <Hero       timeLeft={timeLeft} onScrollTo={scrollTo} weddingConfig={config} loading={dataLoading} themeId={activeThemeId} />
         <Welcome    />
         <Story      />
         <Events     apiEvents={events}   onScrollTo={scrollTo} />

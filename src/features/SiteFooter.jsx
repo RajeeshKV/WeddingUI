@@ -61,7 +61,7 @@ export function SiteFooter({ weddingConfig = null, loading = false }) {
             ? <FooterSkel w={200} />
             : nameParts
               ? nameParts.length === 2
-                ? <>{nameParts[0]} <em>&amp;</em> {nameParts[1]}</>
+                ? <>{nameParts[0]} <em className="couple-ampersand">&amp;</em> {nameParts[1]}</>
                 : nameParts[0]
               : null
           }

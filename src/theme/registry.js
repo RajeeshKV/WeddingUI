@@ -235,6 +235,31 @@ export const THEMES = [
     },
     motion: 'magical',
   },
+  {
+    id: 'floral-romance', name: 'Floral Romance', label: '11 · Floral Romance', note: 'Garden roses, peach, wine',
+    cssClass: 'theme-floral-romance', palette: { primary:'#974D5B', secondary:'#CA8B67', accent:'#D9A58B', preview:['#FFF6E9','#EDC5B7','#9E7371','#974D5B'] },
+    fonts: { serif:"'Cormorant Garamond', Georgia, serif", sans:"'DM Sans', sans-serif", googleFonts:null }, intro:{type:'floral-letter',bg:'rose-garden'}, motion:'organic',
+  },
+  {
+    id: 'modern-luxury', name: 'Modern Luxury', label: '12 · Modern Luxury', note: 'Ivory, ink, brushed brass',
+    cssClass: 'theme-modern-luxury', palette: { primary:'#4D4237', secondary:'#AD8B55', accent:'#C8BDA9', preview:['#EFEBE4','#C8BDA9','#70665B','#28231E'] },
+    fonts: { serif:"'Playfair Display', Georgia, serif", sans:"'DM Sans', sans-serif", googleFonts:null }, intro:{type:'architectural-letter',bg:'limestone'}, motion:'editorial',
+  },
+  {
+    id: 'royal-heritage', name: 'Royal Heritage', label: '13 · Royal Heritage', note: 'Garnet, heirloom gold, ivory',
+    cssClass: 'theme-royal-heritage', palette: { primary:'#842D3C', secondary:'#BF9A51', accent:'#D9BF87', preview:['#F7E9CB','#BF9A51','#842D3C','#1B1020'] },
+    fonts: { serif:"'Cormorant Garamond', Georgia, serif", sans:"'DM Sans', sans-serif", googleFonts:null }, intro:{type:'heirloom-letter',bg:'garnet-velvet'}, motion:'ceremonial',
+  },
+  {
+    id: 'minimal-editorial', name: 'Minimal Editorial', label: '14 · Minimal Editorial', note: 'Warm white, graphite, stone',
+    cssClass: 'theme-minimal-editorial', palette: { primary:'#4C4A46', secondary:'#A79883', accent:'#D6D1C7', preview:['#FAF9F5','#E9E5DC','#A79883','#262522'] },
+    fonts: { serif:"'EB Garamond', Georgia, serif", sans:"'DM Sans', sans-serif", googleFonts:null }, intro:{type:'editorial-letter',bg:'uncoated-paper'}, motion:'restrained',
+  },
+  {
+    id: 'celestial-romance', name: 'Celestial Romance', label: '15 · Celestial Romance', note: 'Indigo, champagne, moonlight',
+    cssClass: 'theme-celestial-romance', palette: { primary:'#655184', secondary:'#D1B774', accent:'#A9A5CE', preview:['#45447C','#20244C','#655184','#D1B774'] },
+    fonts: { serif:"'Cormorant Garamond', Georgia, serif", sans:"'DM Sans', sans-serif", googleFonts:null }, intro:{type:'moonlit-letter',bg:'indigo-horizon'}, motion:'celestial',
+  },
 ];
 
 export const THEME_MAP = Object.fromEntries(THEMES.map(t => [t.id, t]));

@@ -94,7 +94,7 @@ export function TuscanRomanceIntro({ onOpen }) {
           variants={{ hidden:{ opacity:0, y:30, filter:'blur(12px)' }, visible:{ opacity:1, y:0, filter:'blur(0px)' } }}
           transition={{ duration:1.1, ease:[0.2,0.8,0.2,1] }}
         >
-          Aarav <em style={{ fontStyle:'italic',color:'#F0C080' }}>&amp;</em> Siya
+          Aarav <em className="couple-ampersand" style={{ color:'#F0C080' }}>&amp;</em> Siya
         </motion.h1>
       </motion.div>
 

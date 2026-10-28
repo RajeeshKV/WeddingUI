@@ -92,7 +92,7 @@ function ThemeCard({ theme, index, onSelect }) {
   const cardBg = `linear-gradient(135deg, ${c1} 0%, ${c2} 55%, ${c3} 100%)`;
 
   // Determine if dark theme for text color
-  const isDark = ['midnight-vows', 'celestial-promise'].includes(theme.id);
+  const isDark = ['midnight-vows', 'celestial-promise', 'royal-heritage', 'celestial-romance'].includes(theme.id);
 
   return (
     <motion.div
@@ -139,73 +139,12 @@ function ThemeCard({ theme, index, onSelect }) {
             justifyContent: 'center',
             overflow: 'hidden',
           }}>
-            {/* Animated orb / ambient inside card */}
-            <motion.div
-              aria-hidden="true"
-              animate={hovered
-                ? { scale: 1.3, opacity: 0.35 }
-                : { scale: 1, opacity: 0.18 }
-              }
-              transition={{ duration: 0.8, ease: 'easeOut' }}
-              style={{
-                position: 'absolute',
-                width: 120, height: 120,
-                borderRadius: '50%',
-                background: `radial-gradient(circle, ${theme.palette.preview[3]} 0%, transparent 70%)`,
-                filter: 'blur(24px)',
-              }}
-            />
-
-            {/* Orbital ring */}
-            <motion.div
-              aria-hidden="true"
-              animate={{ rotate: 360 }}
-              transition={{ duration: 18, repeat: Infinity, ease: 'linear' }}
-              style={{
-                position: 'absolute',
-                width: 100, height: 100,
-                borderRadius: '50%',
-                border: `1px solid ${isDark ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.45)'}`,
-              }}
-            />
-            <motion.div
-              aria-hidden="true"
-              animate={{ rotate: -360 }}
-              transition={{ duration: 28, repeat: Infinity, ease: 'linear' }}
-              style={{
-                position: 'absolute',
-                width: 140, height: 140,
-                borderRadius: '50%',
-                border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.25)'}`,
-                borderStyle: 'dashed',
-              }}
-            />
-
-            {/* Theme number + monogram */}
-            <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
-              <div style={{
-                fontFamily: "'Cormorant Garamond', Georgia, serif",
-                fontSize: 32,
-                fontWeight: 600,
-                color: isDark ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.95)',
-                lineHeight: 1,
-                textShadow: '0 2px 12px rgba(0,0,0,0.2)',
-                letterSpacing: '-0.02em',
-              }}>
-                A&amp;S
-              </div>
-              <div style={{
-                fontFamily: "'Jost', sans-serif",
-                fontSize: 9,
-                fontWeight: 500,
-                letterSpacing: '0.22em',
-                color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.75)',
-                marginTop: 6,
-                textTransform: 'uppercase',
-              }}>
-                {theme.note.split(',')[0]}
-              </div>
-            </div>
+            <motion.div className="launcher-art" aria-hidden="true" animate={hovered ? { y: -5, rotate: -1 } : { y: 0, rotate: 0 }} transition={{ duration:.45, ease:'easeOut' }}>
+              <span className="launcher-art-kicker">{theme.label.split('·')[0]} / THE WEDDING</span>
+              <strong>Aarav <i className="couple-ampersand">&amp;</i> Siya</strong>
+              <span className="launcher-art-rule" />
+              <span className="launcher-art-date">17 · 02 · 2027</span>
+            </motion.div>
 
             {/* Hover overlay */}
             <AnimatePresence>
@@ -335,7 +274,7 @@ export function ThemeLauncher({ onSelectTheme }) {
               color: '#2A1A2E',
               lineHeight: 1,
             }}>
-              Aarav <em style={{ fontStyle: 'italic', color: '#8B6E7F' }}>&amp;</em> Siya
+              Aarav <em className="couple-ampersand" style={{ color: '#8B6E7F' }}>&amp;</em> Siya
             </div>
           </motion.div>
 

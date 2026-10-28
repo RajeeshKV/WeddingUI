@@ -535,37 +535,142 @@ function PhotoModeration() {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Wedding Settings — loads current config from API first
+// RSVP Section — aggregate stats from dashboard
+// ─────────────────────────────────────────────────────────────────
+
+function RsvpSection() {
+  const [stats,   setStats]   = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error,   setError]   = useState('');
+
+  const load = useCallback(() => {
+    setLoading(true); setError('');
+    getAdminDashboard()
+      .then(setStats)
+      .catch(e => setError(e.message || 'Failed to load RSVP data.'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  if (loading) return <Spinner />;
+  if (error)   return <ErrBox msg={error} />;
+  if (!stats)  return null;
+
+  const attending    = stats.attending    ?? stats.attendingCount    ?? 0;
+  const notAttending = stats.notAttending ?? stats.notAttendingCount ?? 0;
+  const maybe        = stats.maybe        ?? stats.maybeCount        ?? 0;
+  const total        = stats.totalRsvps   ?? 0;
+
+  const rows = [
+    { label: 'Attending',     value: attending,    color: '#059669', bg: '#DCFCE7' },
+    { label: 'Not Attending', value: notAttending, color: '#DC2626', bg: '#FEE2E2' },
+    { label: 'Maybe',         value: maybe,        color: '#D97706', bg: '#FEF9C3' },
+  ];
+
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+        <h2 style={H2}>RSVPs</h2>
+        <button onClick={load} style={{ ...ghostBtn, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <RefreshCw size={13} /> Refresh
+        </button>
+      </div>
+
+      {/* Guest count banner */}
+      <Card style={{
+        padding: '24px 28px', marginBottom: 20,
+        background: 'linear-gradient(135deg, #1A1714 0%, #2E2721 100%)',
+        color: '#F5F0EC',
+      }}>
+        <p style={{ fontSize: 11, letterSpacing: '0.1em', color: '#C4A6B2',
+          fontWeight: 600, margin: '0 0 8px', textTransform: 'uppercase' }}>
+          Total RSVPs received
+        </p>
+        <p style={{ fontSize: 52, fontWeight: 700, margin: '0 0 4px', lineHeight: 1,
+          fontFamily: "'Cormorant Garamond',Georgia,serif" }}>
+          {total}
+        </p>
+        <p style={{ fontSize: 11, color: '#9A9088', margin: 0 }}>
+          responses across all guests
+        </p>
+      </Card>
+
+      {/* Breakdown cards */}
+      <div style={gridAuto(170)}>
+        {rows.map(({ label, value, color, bg }) => (
+          <Card key={label} style={{ padding: '18px 20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+              <p style={{ fontSize: 11, fontWeight: 600, color: '#9A9088',
+                letterSpacing: '0.08em', textTransform: 'uppercase', margin: 0 }}>
+                {label}
+              </p>
+              <span style={{ fontSize: 10, fontWeight: 700, background: bg,
+                color, borderRadius: 99, padding: '2px 8px' }}>
+                {total > 0 ? `${Math.round((value / total) * 100)}%` : '0%'}
+              </span>
+            </div>
+            <p style={{ fontSize: 36, fontWeight: 700, color: '#111',
+              margin: 0, fontFamily: "'Cormorant Garamond',Georgia,serif", lineHeight: 1 }}>
+              {value}
+            </p>
+            <div style={{ marginTop: 10, height: 4, background: '#F3F0EC', borderRadius: 99, overflow: 'hidden' }}>
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${total > 0 ? (value / total) * 100 : 0}%` }}
+                transition={{ duration: 0.8, ease: [0.2, 0.8, 0.2, 1] }}
+                style={{ height: '100%', background: color, borderRadius: 99 }}
+              />
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      <Card style={{ padding: '18px 22px', marginTop: 16 }}>
+        <p style={{ fontSize: 12, color: '#6A6258', margin: '0 0 4px', fontWeight: 600 }}>
+          About RSVP data
+        </p>
+        <p style={{ fontSize: 12, color: '#9A9088', margin: 0, lineHeight: 1.6 }}>
+          The backend provides aggregate counts only. Individual guest records are not available through the current API version. Total guest counts reflect the number of RSVP submissions, not individual headcount per submission.
+        </p>
+      </Card>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Wedding Settings
 // ─────────────────────────────────────────────────────────────────
 
 function WeddingSettings() {
-  const [form, setForm] = useState({
-    name: '', description: '', venue: '', eventDateUtc: '',
-    heroImageUrl: '', rsvpEnabled: true, guestUploadsEnabled: true, autoApprovePhotos: false,
-  });
-  const [loadingConfig, setLoadingConfig] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [msg,    setMsg]    = useState('');
-  const [error,  setError]  = useState('');
+  const INITIAL = { name: '', venue: '', eventDateUtc: '', rsvpEnabled: true, guestUploadsEnabled: true, autoApprovePhotos: false };
+  const [form,         setForm]         = useState(INITIAL);
+  const [original,     setOriginal]     = useState(null); // loaded from API
+  const [loadingConfig,setLoadingConfig]= useState(true);
+  const [saving,       setSaving]       = useState(false);
+  const [msg,          setMsg]          = useState('');
+  const [error,        setError]        = useState('');
 
-  // Load current config on mount via admin endpoint (tenant from JWT)
+  // Dirty = form differs from original
+  const isDirty = original !== null && JSON.stringify(form) !== JSON.stringify(original);
+
   useEffect(() => {
     getAdminWeddingConfig()
       .then(cfg => {
-        setForm({
+        const loaded = {
           name:                cfg.name               ?? '',
-          description:         cfg.description        ?? '',
           venue:               cfg.venue              ?? '',
           eventDateUtc:        cfg.eventDateUtc
-            ? cfg.eventDateUtc.replace('Z', '').substring(0, 16)  // format for datetime-local input
+            ? cfg.eventDateUtc.replace('Z', '').substring(0, 16)
             : '',
-          heroImageUrl:        cfg.heroImageUrl        ?? '',
           rsvpEnabled:         cfg.rsvpEnabled         ?? true,
           guestUploadsEnabled: cfg.guestUploadsEnabled ?? true,
           autoApprovePhotos:   cfg.autoApprovePhotos   ?? false,
-        });
+        };
+        setForm(loaded);
+        setOriginal(loaded);
       })
-      .catch(() => { /* couldn't load — form starts blank */ })
+      .catch(() => {})
       .finally(() => setLoadingConfig(false));
   }, []);
 
@@ -575,15 +680,14 @@ function WeddingSettings() {
     try {
       const payload = {};
       if (form.name)         payload.name         = form.name;
-      if (form.description)  payload.description  = form.description;
       if (form.venue)        payload.venue        = form.venue;
       if (form.eventDateUtc) payload.eventDateUtc = new Date(form.eventDateUtc).toISOString();
-      if (form.heroImageUrl) payload.heroImageUrl = form.heroImageUrl;
       payload.rsvpEnabled         = form.rsvpEnabled;
       payload.guestUploadsEnabled = form.guestUploadsEnabled;
       payload.autoApprovePhotos   = form.autoApprovePhotos;
       await updateWeddingConfig(payload);
-      setMsg('Settings saved successfully.');
+      setMsg('Settings saved.');
+      setOriginal({ ...form });
     } catch (err) {
       setError(err.message || 'Update failed.');
     } finally {
@@ -621,25 +725,11 @@ function WeddingSettings() {
                 placeholder="Grand Hall, Bangalore"
                 style={INP} />
             </label>
-            <label style={LBL}>
+            <label style={{ ...LBL, gridColumn: '1 / -1' }}>
               Event date &amp; time (UTC)
               <input type="datetime-local" value={form.eventDateUtc}
                 onChange={e => setForm(f => ({ ...f, eventDateUtc: e.target.value }))}
                 style={INP} />
-            </label>
-            <label style={{ ...LBL, gridColumn: '1 / -1' }}>
-              Hero image URL
-              <input type="url" value={form.heroImageUrl}
-                onChange={e => setForm(f => ({ ...f, heroImageUrl: e.target.value }))}
-                placeholder="https://res.cloudinary.com/..."
-                style={INP} />
-            </label>
-            <label style={{ ...LBL, gridColumn: '1 / -1' }}>
-              Description
-              <textarea rows={3} value={form.description}
-                onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                placeholder="A short message shown on the public site"
-                style={{ ...INP, resize: 'vertical' }} />
             </label>
           </div>
         </Card>
@@ -680,12 +770,18 @@ function WeddingSettings() {
 
         {/* ── Footer ── */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-          <button type="submit" disabled={saving} style={solidBtn('#8B6E7F')}>
+          <button type="submit" disabled={saving || !isDirty}
+            style={{ ...solidBtn('#8B6E7F'), opacity: (!isDirty && !saving) ? 0.45 : 1 }}>
             {saving
               ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Saving…</>
               : <><Save size={14} aria-hidden="true" /> Save changes</>
             }
           </button>
+          {isDirty && !saving && (
+            <span style={{ fontSize: 11, color: '#D97706', fontWeight: 500 }}>
+              You have unsaved changes
+            </span>
+          )}
           {msg   && <span style={{ fontSize: 12, color: '#059669' }} role="status">{msg}</span>}
           {error && <span style={{ fontSize: 12, color: '#DC2626' }} role="alert">{error}</span>}
         </div>
@@ -764,6 +860,7 @@ function ChangePassword({ onSuccess }) {
 
 const NAV_ITEMS = [
   { id: 'dashboard', label: 'Overview',  Icon: LayoutDashboard },
+  { id: 'rsvp',      label: 'RSVPs',     Icon: Users           },
   { id: 'photos',    label: 'Photos',    Icon: Images           },
   { id: 'settings',  label: 'Settings',  Icon: Settings         },
   { id: 'password',  label: 'Password',  Icon: Key              },
@@ -848,6 +945,7 @@ export function AdminDashboard({ me, mustChange, onMustChangeResolved, onLogout,
             initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }} transition={{ duration: 0.22 }}>
             {page === 'dashboard' && <Overview />}
+            {page === 'rsvp'      && <RsvpSection />}
             {page === 'photos'    && <PhotoModeration />}
             {page === 'settings'  && <WeddingSettings />}
             {page === 'password'  && <ChangePassword />}

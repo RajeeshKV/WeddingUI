@@ -230,7 +230,9 @@ export function GalleryPage() {
         getWeddingConfig(),
       ]);
 
-      const photos = gallery.status === 'fulfilled' ? (gallery.value || []) : [];
+      const raw = gallery.status === 'fulfilled' ? gallery.value : [];
+      // Guard: API may return null or non-array on error
+      const photos = Array.isArray(raw) ? raw : [];
       if (cfg.status === 'fulfilled') setConfig(cfg.value);
       setPhotos(photos);
     } catch (e) {

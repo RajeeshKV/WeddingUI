@@ -108,13 +108,6 @@ function MainSite({ initialThemeId = DEFAULT_THEME }) {
   }, [introVisible]);
 
   const handleIntroOpen    = useCallback(() => setIntroVisible(false), []);
-  const handleReplayIntro  = useCallback(() => setIntroVisible(true), []);
-
-  const handleThemeSelect  = useCallback((id) => {
-    setThemeInURL(id);
-    setActiveThemeId(id);
-    setIntroVisible(true);
-  }, []);
 
   const scrollTo = useCallback((id) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
@@ -129,14 +122,12 @@ function MainSite({ initialThemeId = DEFAULT_THEME }) {
       />
 
       <Nav
-        activeThemeId={activeThemeId}
-        onThemeSelect={handleThemeSelect}
-        onReplayIntro={handleReplayIntro}
         onScrollTo={scrollTo}
+        weddingConfig={config}
       />
 
       <main id="main-content">
-        <Hero       timeLeft={timeLeft} onScrollTo={scrollTo} weddingConfig={config} />
+        <Hero       timeLeft={timeLeft} onScrollTo={scrollTo} weddingConfig={config} loading={dataLoading} />
         <Welcome    />
         <Story      />
         <Events     apiEvents={events}   onScrollTo={scrollTo} />
@@ -145,7 +136,7 @@ function MainSite({ initialThemeId = DEFAULT_THEME }) {
         <Travel     weddingConfig={config} />
       </main>
 
-      <SiteFooter weddingConfig={config} />
+      <SiteFooter weddingConfig={config} loading={dataLoading} />
 
       <AnimatePresence>
         {showTop && (

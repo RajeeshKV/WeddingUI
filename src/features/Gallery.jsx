@@ -1,11 +1,5 @@
-/**
- * Gallery section — main wedding page (home)
- *
- * Shows ONLY the photo upload widget and a link to /gallery.
- * The grid of photos lives exclusively at /gallery (GalleryPage.jsx).
- */
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Camera, Upload, Loader2, ArrowUpRight, Images } from 'lucide-react';
 import { AmbientCanvas } from '../components/background/AmbientCanvas.jsx';
 import { uploadGuestPhotos } from '../services/api/public.js';
@@ -40,8 +34,8 @@ export function Gallery({ weddingConfig = null }) {
       const approved = results.filter(r => r.status === 'Approved').length;
       setUploadMsg(
         pending > 0
-          ? `${results.length} photo${results.length > 1 ? 's' : ''} uploaded — ${pending} awaiting admin approval.`
-          : `${approved} photo${approved > 1 ? 's' : ''} added to the gallery!`
+          ? `${results.length} photo${results.length > 1 ? 's' : ''} uploaded. ${pending} awaiting admin approval.`
+          : `${approved} photo${approved > 1 ? 's' : ''} added to the gallery.`
       );
     } catch (err) {
       setUploadErr(err.message || 'Upload failed. Please try again.');
@@ -60,7 +54,6 @@ export function Gallery({ weddingConfig = null }) {
     >
       <AmbientCanvas mode="orbs" opacity={0.5} />
 
-      {/* Section heading */}
       <div className="section-heading" style={{ position: 'relative', zIndex: 1 }}>
         <motion.span
           className="eyebrow"
@@ -71,7 +64,6 @@ export function Gallery({ weddingConfig = null }) {
         >
           LITTLE PIECES OF FOREVER
         </motion.span>
-
         <motion.h2
           id="gallery-heading"
           initial={{ opacity: 0, y: 20, filter: 'blur(6px)' }}
@@ -81,7 +73,6 @@ export function Gallery({ weddingConfig = null }) {
         >
           Our <em>memories.</em>
         </motion.h2>
-
         <motion.p
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
@@ -92,7 +83,6 @@ export function Gallery({ weddingConfig = null }) {
         </motion.p>
       </div>
 
-      {/* Content area */}
       <motion.div
         style={{ position: 'relative', zIndex: 1, maxWidth: 680, margin: '0 auto' }}
         initial={{ opacity: 0, y: 20 }}
@@ -100,20 +90,15 @@ export function Gallery({ weddingConfig = null }) {
         viewport={{ once: true, amount: 0.2 }}
         transition={{ delay: 0.2, duration: 0.75, ease: [0.2, 0.8, 0.2, 1] }}
       >
-        {/* Gallery link — above upload */}
+        {/* Gallery link */}
         <a
           href="/gallery"
           aria-label="Open the full photo gallery"
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '18px 24px',
-            marginBottom: 16,
-            background: 'var(--t-surface-hi)',
-            border: '1px solid var(--t-border)',
-            borderRadius: 6,
-            textDecoration: 'none',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '18px 24px', marginBottom: 16,
+            background: 'var(--t-surface-hi)', border: '1px solid var(--t-border)',
+            borderRadius: 6, textDecoration: 'none',
             transition: 'box-shadow 0.2s, transform 0.2s',
           }}
           onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 28px rgba(0,0,0,0.08)'; }}
@@ -123,8 +108,7 @@ export function Gallery({ weddingConfig = null }) {
             <div style={{
               width: 40, height: 40, borderRadius: '50%',
               background: 'var(--t-accent-soft)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              flexShrink: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
             }}>
               <Images size={18} color="var(--t-rose)" aria-hidden="true" />
             </div>
@@ -140,16 +124,47 @@ export function Gallery({ weddingConfig = null }) {
           <ArrowUpRight size={16} color="var(--t-rose)" aria-hidden="true" style={{ flexShrink: 0 }} />
         </a>
 
-        {/* Upload widget — only if enabled */}
+        {/* Upload widget */}
         {guestUploadsEnabled ? (
           <div style={{
-            padding: '22px 24px',
-            background: 'var(--t-surface-hi)',
-            border: '1px dashed var(--t-border)',
-            borderRadius: 6,
+            position: 'relative', padding: '22px 24px',
+            background: 'var(--t-surface-hi)', border: '1px dashed var(--t-border)', borderRadius: 6,
           }}>
+            {/* Upload in-progress overlay */}
+            <AnimatePresence>
+              {uploading && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  style={{
+                    position: 'absolute', inset: 0, borderRadius: 6, zIndex: 10,
+                    background: 'rgba(var(--t-surface-hi-rgb, 251,246,249), 0.88)',
+                    backdropFilter: 'blur(4px)',
+                    display: 'flex', flexDirection: 'column',
+                    alignItems: 'center', justifyContent: 'center', gap: 10,
+                  }}
+                  aria-live="polite"
+                  aria-label="Uploading photos"
+                >
+                  <Loader2
+                    size={28}
+                    color="var(--t-rose)"
+                    aria-hidden="true"
+                    style={{ animation: 'galleryUploadSpin 0.9s linear infinite' }}
+                  />
+                  <p style={{
+                    fontSize: 12, fontWeight: 600, color: 'var(--t-fg)',
+                    margin: 0, letterSpacing: '0.06em',
+                    fontFamily: "'Jost', sans-serif",
+                  }}>
+                    Uploading...
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-              {/* Icon */}
               <div style={{
                 width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
                 background: 'var(--t-accent-soft)',
@@ -158,14 +173,10 @@ export function Gallery({ weddingConfig = null }) {
                 <Camera size={18} color="var(--t-rose)" aria-hidden="true" />
               </div>
 
-              {/* Text + controls */}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <h3 style={{
-                  fontFamily: 'var(--font-serif)',
-                  fontSize: 20, fontWeight: 600,
-                  color: 'var(--t-fg)',
-                  margin: '0 0 4px',
-                  lineHeight: 1.2,
+                  fontFamily: 'var(--font-serif)', fontSize: 20, fontWeight: 600,
+                  color: 'var(--t-fg)', margin: '0 0 4px', lineHeight: 1.2,
                 }}>
                   Add your photos
                 </h3>
@@ -181,38 +192,32 @@ export function Gallery({ weddingConfig = null }) {
                       value={uploadName}
                       onChange={e => setUploadName(e.target.value)}
                       style={{
-                        border: '1px solid var(--t-border)',
-                        borderRadius: 4, padding: '8px 12px',
-                        fontSize: 12, background: 'var(--t-bg)',
-                        color: 'var(--t-fg)', minWidth: 160,
+                        border: '1px solid var(--t-border)', borderRadius: 4, padding: '8px 12px',
+                        fontSize: 12, background: 'var(--t-bg)', color: 'var(--t-fg)', minWidth: 160,
                         fontFamily: "'Jost', sans-serif",
                       }}
                       aria-label="Your name for the photo upload"
+                      disabled={uploading}
                     />
                   )}
-
-                  <label className="btn btn-outline" style={{ cursor: 'pointer' }}>
-                    {uploading
-                      ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} aria-hidden="true" /> Uploading…</>
-                      : <><Upload size={14} aria-hidden="true" /> Add photos</>
-                    }
+                  <label
+                    className="btn btn-outline"
+                    style={{ cursor: uploading ? 'not-allowed' : 'pointer', opacity: uploading ? 0.6 : 1 }}
+                  >
+                    <Upload size={14} aria-hidden="true" /> Add photos
                     <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={handleUpload}
-                      hidden
+                      type="file" accept="image/*" multiple
+                      onChange={handleUpload} hidden
                       disabled={uploading}
                       aria-label="Upload your wedding photos"
                     />
                   </label>
                 </div>
 
-                {/* Feedback */}
                 {uploadMsg && (
                   <p style={{ fontSize: 12, color: 'var(--t-rose)', marginTop: 10, lineHeight: 1.5 }}
                     role="status" aria-live="polite">
-                    ✓ {uploadMsg}
+                    {uploadMsg}
                   </p>
                 )}
                 {uploadErr && (
@@ -225,11 +230,9 @@ export function Gallery({ weddingConfig = null }) {
             </div>
           </div>
         ) : (
-          /* Uploads disabled — just show the gallery link prominently */
           <div style={{
             padding: '18px 24px', borderRadius: 6,
-            background: 'var(--t-accent-soft)',
-            border: '1px solid var(--t-border)',
+            background: 'var(--t-accent-soft)', border: '1px solid var(--t-border)',
             fontSize: 12, color: 'var(--t-muted)', textAlign: 'center',
           }}>
             Guest photo uploads are currently closed.
@@ -237,7 +240,12 @@ export function Gallery({ weddingConfig = null }) {
         )}
       </motion.div>
 
-      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+      <style>{`
+        @keyframes galleryUploadSpin {
+          from { transform: rotate(0deg); }
+          to   { transform: rotate(360deg); }
+        }
+      `}</style>
     </section>
   );
 }

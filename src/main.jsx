@@ -130,7 +130,7 @@ function MainSite({ initialThemeId = DEFAULT_THEME }) {
       <main id="main-content">
         <Hero       timeLeft={timeLeft} onScrollTo={scrollTo} weddingConfig={config} loading={dataLoading} themeId={activeThemeId} />
         <Welcome    weddingConfig={config} loading={dataLoading} />
-        <Story      />
+        <Story      photos={gallery} />
         <Events     apiEvents={events}   onScrollTo={scrollTo} />
         <Gallery    weddingConfig={config} />
         <RSVP       weddingConfig={config} loading={dataLoading} />

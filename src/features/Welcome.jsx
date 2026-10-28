@@ -17,9 +17,11 @@ function InlineSkel({ w = 100 }) {
 export function Welcome({ weddingConfig = null, loading = false }) {
   // Parse names from config
   let names = null;
+  let nameParts = null;
   if (!loading && weddingConfig?.name) {
     const m = weddingConfig.name.match(/^(.+?)\s*&\s*(.+?)(?:\s+Wedding)?$/i);
-    names = m ? `${m[1].trim()} & ${m[2].trim()}` : weddingConfig.name.replace(/\s*Wedding\s*$/i, '').trim();
+    nameParts = m ? [m[1].trim(), m[2].trim()] : [weddingConfig.name.replace(/\s*Wedding\s*$/i, '').trim()];
+    names = nameParts.join(' & ');
   }
 
   return (
@@ -77,9 +79,15 @@ export function Welcome({ weddingConfig = null, loading = false }) {
           aria-label={names ? `With love, ${names}` : undefined}
         >
           {loading
-            ? <>With love, <InlineSkel w={120} /></>
-            : names
-              ? `With love, ${names}`
+            ? <><span className="signature-lead">With love,</span><InlineSkel w={160} /></>
+            : nameParts
+              ? <>
+                  <span className="signature-lead">With love,</span>
+                  <span className="signature-couple">
+                    {nameParts[0]}
+                    {nameParts.length === 2 && <><span className="couple-ampersand">&amp;</span>{nameParts[1]}</>}
+                  </span>
+                </>
               : null
           }
         </motion.div>

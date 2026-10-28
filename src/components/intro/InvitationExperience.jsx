@@ -43,6 +43,7 @@ const BACKDROPS = {
 const CONTRAST_INK = {
   'cinema-paradiso':{ink:'#f5e6cb',muted:'#d6b988'},
   'ocean-serenade':{ink:'#f5fbf5',muted:'#d5ece7'},
+  'secret-garden':{ink:'#fff8e8',muted:'#e4e1c8'},
 };
 
 // Theme-specific choreography echoes the original reveals while sharing the invitation artwork.
@@ -105,7 +106,7 @@ export function InvitationExperience({ themeId, onOpen, coupleName }) {
       <ThemeMotion themeId={themeId} reduced={reduceMotion} />
       <motion.div className="invite-composition" initial={reduceMotion?false:{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{duration:reduceMotion?0:0.9,ease:[0.2,0.75,0.2,1]}}>
         <motion.p className="invite-eyebrow" initial={reduceMotion?false:{opacity:0,letterSpacing:'0.5em',y:8}} animate={{opacity:1,letterSpacing:'0.32em',y:0}} transition={{delay:0.25,duration:reduceMotion?0:1}}>{art.eyebrow}</motion.p>
-        <motion.h1 className="invite-names" initial={reduceMotion?false:choreography.name} animate={{opacity:1,y:0,x:0,scale:1,rotate:0,rotateZ:0,rotateX:0,rotateY:0,filter:'blur(0px)',clipPath:'inset(0 0 0% 0)'}} transition={{delay:reduceMotion?0:choreography.delay,duration:reduceMotion?0:choreography.duration,ease:[0.2,0.8,0.2,1]}}>{partnerOne} <em className="couple-ampersand">&amp;</em> {partnerTwo}</motion.h1>
+        <motion.h1 className="invite-names" initial={reduceMotion?false:choreography.name} animate={{opacity:1,y:0,x:0,scale:1,rotate:0,rotateZ:0,rotateX:0,rotateY:0,filter:'blur(0px)',clipPath:'inset(0 0 0% 0)'}} transition={{delay:reduceMotion?0:choreography.delay,duration:reduceMotion?0:choreography.duration,ease:[0.2,0.8,0.2,1]}}><span className="invite-name-part">{partnerOne}</span><em className="couple-ampersand">&amp;</em><span className="invite-name-part">{partnerTwo}</span></motion.h1>
         <motion.p className="invite-deck" initial={reduceMotion?false:{opacity:0,y:8}} animate={{opacity:1,y:0}} transition={{delay:.72,duration:reduceMotion?0:.8}}>{art.line}</motion.p>
         <InvitationLetter opening={opening} onOpen={open} monogram={monogram} entrance={choreography.card} entranceDelay={Math.max(.82,choreography.delay+.2)} entranceDuration={choreography.duration} />
       </motion.div>

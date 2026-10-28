@@ -93,18 +93,18 @@ export function enableAutoApprove() {
 // GET /api/v1/admin/wedding/photos — all photos for tenant's wedding
 // Returns: [{ id, imageUrl, thumbnailUrl, uploadedByName, caption,
 //             status: "Pending|Approved|Rejected", uploadedAtUtc, weddingId }]
-export function getWeddingPhotos() {
-  return api.get(base('/wedding/photos'), { role: ROLE });
+export function getWeddingPhotos({ page = 1, pageSize = 20 } = {}) {
+  return api.get(base('/wedding/photos'), { role: ROLE, params: { page, pageSize } });
 }
 
 // GET /api/v1/admin/photos — all photos across tenant's weddings
-export function getAllAdminPhotos() {
-  return api.get(base('/photos'), { role: ROLE });
+export function getAllAdminPhotos({ page = 1, pageSize = 20 } = {}) {
+  return api.get(base('/photos'), { role: ROLE, params: { page, pageSize } });
 }
 
 // GET /api/v1/admin/photos/pending
-export function getPendingPhotos() {
-  return api.get(base('/photos/pending'), { role: ROLE });
+export function getPendingPhotos({ page = 1, pageSize = 20 } = {}) {
+  return api.get(base('/photos/pending'), { role: ROLE, params: { page, pageSize } });
 }
 
 // POST /api/v1/admin/photos/{photoId}/approve  → 204

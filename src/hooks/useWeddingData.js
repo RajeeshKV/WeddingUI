@@ -4,7 +4,7 @@
  * Falls back gracefully when VITE_WEDDING_SLUG is not set (demo mode).
  */
 import { useState, useEffect, useCallback } from 'react';
-import { getWeddingConfig, getWeddingEvents, getPublicGallery } from '../services/api/public.js';
+import { getWeddingConfig, getAllWeddingEvents, getPublicGallery, normalizePage } from '../services/api/public.js';
 
 const SLUG = import.meta.env.VITE_WEDDING_SLUG || '';
 
@@ -22,12 +22,12 @@ export function useWeddingData() {
     try {
       const [cfg, evts, gal] = await Promise.all([
         getWeddingConfig(),
-        getWeddingEvents(),
-        getPublicGallery(),
+        getAllWeddingEvents(),
+        getPublicGallery({ page: 1, pageSize: 4 }),
       ]);
       setConfig(cfg);
-      setEvents(evts);
-      setGallery(gal);
+      setEvents(Array.isArray(evts) ? evts : []);
+      setGallery(normalizePage(gal, 1, 4).items);
     } catch (e) {
       setError(e.message || 'Failed to load wedding data.');
     } finally {

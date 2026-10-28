@@ -1,50 +1,10 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Camera, Upload, Loader2, ArrowUpRight, Images } from 'lucide-react';
+import React from 'react';
+import { motion } from 'framer-motion';
+import { ArrowUpRight, Images } from 'lucide-react';
 import { AmbientCanvas } from '../components/background/AmbientCanvas.jsx';
-import { uploadGuestPhotos } from '../services/api/public.js';
-
-const SLUG    = import.meta.env.VITE_WEDDING_SLUG || '';
-const HAS_API = Boolean(SLUG);
+import { GuestPhotoUpload } from './GuestPhotoUpload.jsx';
 
 export function Gallery({ weddingConfig = null }) {
-  const [uploading,  setUploading]  = useState(false);
-  const [uploadName, setUploadName] = useState('');
-  const [uploadMsg,  setUploadMsg]  = useState('');
-  const [uploadErr,  setUploadErr]  = useState('');
-
-  const guestUploadsEnabled = weddingConfig ? weddingConfig.guestUploadsEnabled : true;
-
-  const handleUpload = async (e) => {
-    const files = [...e.target.files].filter(f => f.type.startsWith('image/')).slice(0, 8);
-    if (!files.length) return;
-    setUploadErr('');
-    setUploadMsg('');
-
-    if (!HAS_API) {
-      setUploadMsg('Demo mode — set VITE_WEDDING_SLUG to upload for real.');
-      e.target.value = '';
-      return;
-    }
-
-    setUploading(true);
-    try {
-      const results = await uploadGuestPhotos(files, uploadName);
-      const pending  = results.filter(r => r.status === 'Pending').length;
-      const approved = results.filter(r => r.status === 'Approved').length;
-      setUploadMsg(
-        pending > 0
-          ? `${results.length} photo${results.length > 1 ? 's' : ''} uploaded. ${pending} awaiting admin approval.`
-          : `${approved} photo${approved > 1 ? 's' : ''} added to the gallery.`
-      );
-    } catch (err) {
-      setUploadErr(err.message || 'Upload failed. Please try again.');
-    } finally {
-      setUploading(false);
-      e.target.value = '';
-    }
-  };
-
   return (
     <section
       className="gallery section-pad"
@@ -124,127 +84,10 @@ export function Gallery({ weddingConfig = null }) {
           <ArrowUpRight size={16} color="var(--t-rose)" aria-hidden="true" style={{ flexShrink: 0 }} />
         </a>
 
-        {/* Upload widget */}
-        {guestUploadsEnabled ? (
-          <div style={{
-            position: 'relative', padding: '22px 24px',
-            background: 'var(--t-surface-hi)', border: '1px dashed var(--t-border)', borderRadius: 6,
-          }}>
-            {/* Upload in-progress overlay */}
-            <AnimatePresence>
-              {uploading && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  style={{
-                    position: 'absolute', inset: 0, borderRadius: 6, zIndex: 10,
-                    background: 'rgba(var(--t-surface-hi-rgb, 251,246,249), 0.88)',
-                    backdropFilter: 'blur(4px)',
-                    display: 'flex', flexDirection: 'column',
-                    alignItems: 'center', justifyContent: 'center', gap: 10,
-                  }}
-                  aria-live="polite"
-                  aria-label="Uploading photos"
-                >
-                  <Loader2
-                    size={28}
-                    color="var(--t-rose)"
-                    aria-hidden="true"
-                    style={{ animation: 'galleryUploadSpin 0.9s linear infinite' }}
-                  />
-                  <p style={{
-                    fontSize: 12, fontWeight: 600, color: 'var(--t-fg)',
-                    margin: 0, letterSpacing: '0.06em',
-                    fontFamily: "'Jost', sans-serif",
-                  }}>
-                    Uploading...
-                  </p>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-              <div style={{
-                width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
-                background: 'var(--t-accent-soft)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <Camera size={18} color="var(--t-rose)" aria-hidden="true" />
-              </div>
-
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <h3 style={{
-                  fontFamily: 'var(--font-serif)', fontSize: 20, fontWeight: 600,
-                  color: 'var(--t-fg)', margin: '0 0 4px', lineHeight: 1.2,
-                }}>
-                  Add your photos
-                </h3>
-                <p style={{ fontSize: 12, color: 'var(--t-muted)', margin: '0 0 16px', lineHeight: 1.6 }}>
-                  Share your favourite moments from the celebration. Photos may be reviewed before appearing in the gallery.
-                </p>
-
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
-                  {HAS_API && (
-                    <input
-                      type="text"
-                      placeholder="Your name (optional)"
-                      value={uploadName}
-                      onChange={e => setUploadName(e.target.value)}
-                      style={{
-                        border: '1px solid var(--t-border)', borderRadius: 4, padding: '8px 12px',
-                        fontSize: 12, background: 'var(--t-bg)', color: 'var(--t-fg)', minWidth: 160,
-                        fontFamily: "'Jost', sans-serif",
-                      }}
-                      aria-label="Your name for the photo upload"
-                      disabled={uploading}
-                    />
-                  )}
-                  <label
-                    className="btn btn-outline"
-                    style={{ cursor: uploading ? 'not-allowed' : 'pointer', opacity: uploading ? 0.6 : 1 }}
-                  >
-                    <Upload size={14} aria-hidden="true" /> Add photos
-                    <input
-                      type="file" accept="image/*" multiple
-                      onChange={handleUpload} hidden
-                      disabled={uploading}
-                      aria-label="Upload your wedding photos"
-                    />
-                  </label>
-                </div>
-
-                {uploadMsg && (
-                  <p style={{ fontSize: 12, color: 'var(--t-rose)', marginTop: 10, lineHeight: 1.5 }}
-                    role="status" aria-live="polite">
-                    {uploadMsg}
-                  </p>
-                )}
-                {uploadErr && (
-                  <p style={{ fontSize: 12, color: 'var(--t-danger,#C4606E)', marginTop: 10 }}
-                    role="alert">
-                    {uploadErr}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div style={{
-            padding: '18px 24px', borderRadius: 6,
-            background: 'var(--t-accent-soft)', border: '1px solid var(--t-border)',
-            fontSize: 12, color: 'var(--t-muted)', textAlign: 'center',
-          }}>
-            Guest photo uploads are currently closed.
-          </div>
-        )}
+        <GuestPhotoUpload weddingConfig={weddingConfig} />
       </motion.div>
 
       <style>{`
-        @keyframes galleryUploadSpin {
-          from { transform: rotate(0deg); }
-          to   { transform: rotate(360deg); }
-        }
       `}</style>
     </section>
   );

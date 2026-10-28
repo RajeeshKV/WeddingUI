@@ -1747,13 +1747,6 @@ h1 em, h2 em, h3 em {
 .motion-bloom-cluster{position:absolute;inset:0;z-index:0}
 .motion-bloom{position:absolute;width:clamp(110px,18vw,260px);aspect-ratio:1;border-radius:50%;opacity:0;background:radial-gradient(circle at 50% 50%,rgba(255,244,218,.92) 0 5%,var(--bloom-tone) 8% 13%,transparent 15%),repeating-conic-gradient(from 0deg,var(--bloom-tone) 0 9deg,rgba(255,232,218,.9) 10deg 18deg,transparent 19deg 35deg);filter:blur(.2px) drop-shadow(0 6px 20px rgba(106,54,64,.12));mix-blend-mode:screen}
 .motion-bloom--1{left:4%;top:8%}.motion-bloom--2{right:6%;top:12%;width:clamp(86px,13vw,190px)}.motion-bloom--3{left:10%;bottom:6%;width:clamp(90px,14vw,205px)}.motion-bloom--4{right:3%;bottom:8%;width:clamp(124px,20vw,280px)}.motion-bloom--5{left:34%;top:4%;width:clamp(62px,9vw,130px)}
-.motion-marigold-canopy{position:absolute;inset:0 0 auto;height:36%;display:flex;justify-content:space-evenly;align-items:flex-start;z-index:1;mask-image:linear-gradient(#000,transparent 88%)}
-.motion-marigold-strand{height:100%;width:clamp(30px,6vw,88px);transform-origin:top center;border-inline:1px solid rgba(255,222,152,.22);display:flex;flex-direction:column;justify-content:space-around;align-items:center;filter:drop-shadow(0 5px 9px rgba(85,34,16,.2))}
-.motion-marigold-strand span{width:clamp(17px,2.4vw,35px);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 38% 34%,#ffe49a 0 7%,#f6b22f 22%,#dc751b 63%,#a63c17 100%);box-shadow:inset 0 0 0 3px rgba(255,222,119,.28),0 4px 10px rgba(116,47,16,.18);animation:marigold-sway 5.5s ease-in-out infinite alternate;animation-delay:calc(var(--strand)*-.37s)}
-@keyframes marigold-sway{to{transform:translateX(3px) rotate(8deg)}}
-.motion-sunset-halo{position:absolute;width:min(60vw,780px);height:min(32vw,380px);left:50%;bottom:12%;translate:-50% 0;border-radius:50%;background:radial-gradient(ellipse,rgba(255,208,126,.52),rgba(231,133,87,.24) 38%,transparent 72%);filter:blur(12px);mix-blend-mode:screen}
-.motion-sunset-disc{position:absolute;width:clamp(100px,15vw,205px);aspect-ratio:1;left:50%;bottom:22%;translate:-50% 0;border-radius:50%;background:linear-gradient(180deg,#ffe2a1 0%,#f7b16f 58%,#e77f64 100%);box-shadow:0 0 65px rgba(255,182,104,.42),0 0 150px rgba(255,162,100,.2);mix-blend-mode:screen}
-.motion-sunset-ray{position:absolute;left:-10%;top:-18%;width:120%;height:72%;background:linear-gradient(112deg,transparent 42%,rgba(255,234,183,.2) 49%,transparent 57%);transform-origin:50% 100%;mix-blend-mode:screen}
 .motion-pearl-sheen{position:absolute;top:-20%;bottom:-20%;left:-20%;width:34%;transform:rotate(12deg);background:linear-gradient(90deg,transparent,rgba(255,255,255,.66),rgba(255,255,255,.14),transparent);filter:blur(8px);mix-blend-mode:screen}
 .motion-editorial-rule{position:absolute;left:7%;right:7%;height:1px;background:linear-gradient(90deg,transparent,rgba(255,250,241,.82),rgba(154,123,92,.48),transparent);transform-origin:center;opacity:.72}
 .motion-editorial-rule--top{top:9%}.motion-editorial-rule--bottom{bottom:9%}
@@ -1776,15 +1769,39 @@ h1 em, h2 em, h3 em {
 .motion-star-map--romantic .motion-star-route{stroke:rgba(220,220,255,.32);stroke-dasharray:.22 .7}.motion-moonrise{fill:#eadfbe;filter:drop-shadow(0 0 5px rgba(239,226,190,.34))}
 .motion-cinema-beam{position:absolute;left:29%;top:-20%;width:42%;height:92%;transform-origin:top center;background:linear-gradient(180deg,rgba(255,225,171,.38),rgba(255,214,145,.09) 70%,transparent);clip-path:polygon(44% 0,56% 0,100% 100%,0 100%);filter:blur(4px);mix-blend-mode:screen}
 .motion-cinema-flicker{position:absolute;inset:0;background:rgba(255,220,166,.06);mix-blend-mode:screen}
-.motion-film-gate{position:absolute;inset:6% 4%;border:1px solid rgba(246,218,168,.3);display:flex;justify-content:space-between;opacity:.55}.motion-film-gate span{width:7px;height:12px;background:rgba(246,218,168,.3);border-radius:1px}.motion-film-gate:before,.motion-film-gate:after{content:"";position:absolute;left:0;right:0;height:1px;background:rgba(246,218,168,.3)}.motion-film-gate:before{top:4%}.motion-film-gate:after{bottom:4%}
 .motion-window-shadow{position:absolute;inset:-10% 16% -10% 15%;background:linear-gradient(90deg,transparent 0 18%,rgba(42,36,28,.25) 18% 20%,transparent 20% 46%,rgba(42,36,28,.18) 46% 48%,transparent 48%),linear-gradient(90deg,rgba(255,255,255,.18),transparent);mix-blend-mode:multiply;filter:blur(2px)}
 .motion-brass-line{position:absolute;right:12%;top:18%;width:clamp(80px,16vw,220px);height:1px;background:linear-gradient(90deg,transparent,#d7bc81,transparent);transform-origin:right;box-shadow:0 0 8px rgba(220,194,137,.42)}
 .motion-royal-curtain{position:absolute;top:0;bottom:0;width:51%;background:linear-gradient(90deg,#24101b,#6b2431 38%,#34121e 92%);z-index:2;box-shadow:inset 0 0 40px rgba(0,0,0,.34)}.motion-royal-curtain--left{left:0;transform-origin:left}.motion-royal-curtain--right{right:0;transform-origin:right;background:linear-gradient(270deg,#24101b,#6b2431 38%,#34121e 92%)}
 .motion-royal-arch{position:absolute;width:min(54vw,680px);height:92vh;left:50%;top:4%;translate:-50% 0;fill:none;stroke:#e2c27e;stroke-width:2;filter:drop-shadow(0 0 6px rgba(226,194,126,.26))}
 .motion-editorial-rule--top,.motion-editorial-rule--bottom{background:linear-gradient(90deg,transparent,rgba(118,106,92,.45),transparent)}
-@media(max-width:600px){.motion-sunset-halo{width:100vw;height:58vw;bottom:18%}.motion-sunset-disc{bottom:24%;width:clamp(74px,22vw,120px)}.motion-sakura-branch{width:75vw;left:-17%;top:7%}.motion-olive-branch{width:42vw;left:-15%}.motion-royal-arch{width:88vw;height:85vh}.motion-editorial-corner{width:18vw;height:18vh}.motion-eternal-vine{opacity:.6}}
-@media(prefers-reduced-motion:reduce){.motion-marigold-strand span{animation:none}.invite-theme-motion{display:none}}
-@media(max-width:600px){.invite-composition .invite-names{font-size:clamp(42px,12vw,62px)}.invite-composition .invite-letter{width:min(440px,88vw)}}
+@media(max-width:600px){.motion-sakura-branch{width:75vw;left:-17%;top:7%}.motion-olive-branch{width:42vw;left:-15%}.motion-royal-arch{width:88vw;height:85vh}.motion-editorial-corner{width:18vw;height:18vh}.motion-eternal-vine{opacity:.6}}
+@media(prefers-reduced-motion:reduce){.invite-theme-motion{display:none}}
+
+/* Theme-specific, photographic motion refinements. */
+.motion-olive-branch{width:min(30vw,390px);height:94vh;left:-3%;bottom:-13%}
+.motion-olive-stem{stroke-width:2.2}
+.motion-olive-leaf{stroke-width:.9}
+.motion-ocean-tides{mask-image:linear-gradient(transparent 35%,#000 57%,#000 82%,transparent)}
+.motion-ocean-foam{position:absolute;inset:38% -2% 0;width:104%;height:48%;overflow:visible;filter:drop-shadow(0 1px 5px rgba(222,245,241,.16))}
+.motion-ocean-foam path{fill:none;stroke:rgba(237,249,245,.72);stroke-width:1.2;stroke-linecap:round;stroke-dasharray:.5 2.7}
+.motion-ocean-foam path+path{stroke-width:.8;stroke-dasharray:.25 3;opacity:.65}
+.motion-ocean-glint{left:37%;top:42%;width:22%;height:32%;filter:blur(15px)}
+.motion-cinema-spot{position:absolute;left:50%;top:24%;width:min(44vw,640px);height:min(30vw,340px);translate:-50% 0;border-radius:50%;background:radial-gradient(ellipse,rgba(255,226,180,.26),rgba(242,184,112,.09) 42%,transparent 73%);mix-blend-mode:screen;filter:blur(9px)}
+.motion-tuscan-dawn{position:absolute;inset:-4% -12%;background:radial-gradient(ellipse at 64% 43%,rgba(255,226,181,.38),rgba(250,177,113,.12) 34%,transparent 69%);filter:blur(8px);mix-blend-mode:screen}
+.motion-tuscan-horizon{position:absolute;left:12%;right:10%;bottom:32%;height:1px;transform-origin:center;background:linear-gradient(90deg,transparent,rgba(255,232,190,.78),rgba(255,199,132,.46),transparent);box-shadow:0 0 24px 4px rgba(255,209,147,.2)}
+.motion-marigold-sunwash{position:absolute;inset:-16% -20%;background:linear-gradient(110deg,transparent 27%,rgba(255,222,148,.07) 39%,rgba(255,228,170,.28) 51%,rgba(255,204,116,.08) 62%,transparent 74%);mix-blend-mode:screen;filter:blur(18px)}
+.motion-marigold-arch{position:absolute;inset:0;width:100%;height:100%;fill:none;stroke:rgba(255,229,166,.47);stroke-width:1.1;filter:drop-shadow(0 1px 5px rgba(108,48,20,.18))}
+.motion-sakura-sunlight{position:absolute;inset:-10% -15%;background:linear-gradient(112deg,transparent 33%,rgba(255,249,223,.06) 42%,rgba(255,238,210,.4) 52%,rgba(255,248,232,.08) 63%,transparent 72%);filter:blur(16px);mix-blend-mode:screen}
+.motion-sakura-waterline{position:absolute;left:22%;right:19%;top:67%;height:1px;transform-origin:center;background:linear-gradient(90deg,transparent,rgba(255,255,245,.74),rgba(238,214,197,.45),transparent);box-shadow:0 0 17px 2px rgba(255,245,225,.24)}
+.motion-lunar-phase{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.motion-lunar-halo{fill:rgba(228,225,208,.08);stroke:rgba(232,222,197,.3);stroke-width:.4}
+.motion-lunar-crescent{fill:#eee4c9;filter:drop-shadow(0 0 3px rgba(238,228,201,.48))}
+.motion-lunar-arc{fill:none;stroke:rgba(222,216,238,.3);stroke-width:.18;stroke-dasharray:.7 .55}
+.motion-midnight-spill{position:absolute;inset:8% -8%;background:radial-gradient(ellipse at 53% 53%,rgba(255,205,133,.2),rgba(145,86,64,.08) 28%,transparent 61%);filter:blur(18px);mix-blend-mode:screen}
+.motion-midnight-reflection{position:absolute;left:39%;top:68%;width:24%;height:1px;transform-origin:center;background:linear-gradient(90deg,transparent,rgba(249,218,163,.7),rgba(245,187,122,.42),transparent);box-shadow:0 0 20px 3px rgba(241,186,123,.2)}
+.motion-olive-leaf{transform-box:fill-box;transform-origin:center}
+@media(max-width:600px){.motion-sakura-branch{width:75vw;left:-17%;top:7%}.motion-olive-branch{width:42vw;left:-15%}.motion-royal-arch{width:88vw;height:85vh}.motion-editorial-corner{width:18vw;height:18vh}.motion-eternal-vine{opacity:.6}.motion-ocean-foam{inset:45% -12% 0;width:124%;height:38%}.motion-cinema-spot{width:76vw;height:54vw;top:28%}.motion-marigold-arch{inset:4% -16%;width:132%;height:90%}.motion-sakura-waterline{left:10%;right:10%;top:69%}}
+@media(max-width:600px){.invite-composition .invite-names{font-size:clamp(34px,9vw,46px);line-height:1.14;padding:0 .06em .1em;white-space:normal;max-width:100%;display:flex;align-items:baseline;justify-content:center;flex-wrap:wrap;gap:0 .08em}.invite-composition .invite-names .invite-name-part{white-space:nowrap}.invite-composition .invite-names .couple-ampersand{flex:0 0 auto}.invite-composition .invite-letter{width:min(440px,88vw)}}
 @media(max-height:650px) and (min-width:601px){.invite-composition .invite-letter{width:min(470px,72vw)}}
 @media(prefers-reduced-motion:reduce){.invite-open:before{display:none}}
 
@@ -1860,6 +1877,21 @@ h1 em, h2 em, h3 em {
 @media(max-width:380px){.site .hero-title{font-size:clamp(34px,9.5vw,48px);letter-spacing:-.045em}.site .countdown{gap:5px}.site .countdown-item{min-width:52px}}
 @media(max-width:600px){.site .nav-logo-initials{font-size:40px}.site-nav--scrolled .nav-logo-initials{font-size:32px}.site .nav-logo-ornament>span:first-child,.site .nav-logo-ornament>span:last-child{width:21px}}
 
+/* Story photos form a replaceable four-image shattered collage. */
+.story-mosaic{grid-column:2;width:min(100%,500px);justify-self:end;align-self:start;display:grid;grid-template-columns:1.08fr .92fr;grid-template-rows:1fr 1fr;gap:10px;aspect-ratio:1.25;margin:-24px 0 0;padding:10px;background:color-mix(in srgb,var(--t-surface-hi) 72%,transparent);box-shadow:0 20px 50px color-mix(in srgb,var(--t-fg) 12%,transparent)}
+.story-mosaic__tile{min-width:0;min-height:0;overflow:hidden;background:var(--t-accent-soft);box-shadow:0 8px 20px rgba(30,20,24,.12)}
+.story-mosaic__tile img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .7s cubic-bezier(.2,.8,.2,1)}
+.story-mosaic__tile:hover img{transform:scale(1.045)}
+.story-mosaic__tile--1{clip-path:polygon(0 4%,94% 0,100% 92%,8% 100%)}
+.story-mosaic__tile--2{clip-path:polygon(7% 0,100% 5%,94% 100%,0 92%)}
+.story-mosaic__tile--3{clip-path:polygon(4% 0,100% 8%,91% 100%,0 94%)}
+.story-mosaic__tile--4{clip-path:polygon(0 7%,93% 0,100% 96%,6% 100%)}
+.site .welcome .signature{display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center}
+.site .welcome .signature-lead{font-size:.72em;letter-spacing:.02em}
+.site .welcome .signature-couple{display:flex;flex-wrap:wrap;justify-content:center;align-items:baseline;gap:.12em;line-height:1.16;text-wrap:balance}
+.site .welcome .signature-couple .couple-ampersand{margin:0 .04em}
+.invite-composition .invite-names{line-height:1.1;padding-bottom:.1em;white-space:normal}
+
 /* Eternal Bloom — the invitation's floral art direction carries through the site */
 .theme-eternal-bloom .site-nav{border-bottom-color:rgba(128,83,100,.18);box-shadow:0 4px 24px rgba(69,38,53,.045)}
 .theme-eternal-bloom .site-nav--scrolled{box-shadow:0 10px 32px rgba(69,38,53,.1)}
@@ -1870,6 +1902,7 @@ h1 em, h2 em, h3 em {
 .theme-eternal-bloom .story{background:linear-gradient(145deg,#f2e7ed 0%,#e9dce7 100%)}
 .theme-eternal-bloom .story-photo--large img{border-radius:210px 210px 3px 3px;box-shadow:0 24px 50px rgba(73,42,61,.16)}
 .theme-eternal-bloom .story-photo--small img{border-radius:140px 140px 3px 3px;box-shadow:0 18px 36px rgba(73,42,61,.14)}
+.theme-eternal-bloom .story-mosaic{border-radius:36px 3px 36px 3px;box-shadow:0 24px 52px rgba(73,42,61,.15)}
 .theme-eternal-bloom .timeline-item{position:relative;border-bottom-color:rgba(116,78,98,.14)}
 .theme-eternal-bloom .events{background:linear-gradient(180deg,#fbf6f6,#f5e9ec)}
 .theme-eternal-bloom .event-grid{gap:clamp(16px,2.2vw,28px)}
@@ -1896,6 +1929,8 @@ h1 em, h2 em, h3 em {
 .theme-eternal-bloom .site-footer{background:radial-gradient(ellipse at 50% 0%,#69475b,#432d40 68%);border-top:1px solid rgba(239,212,218,.25)}
 .theme-eternal-bloom .site-footer h2 em{color:#e4b5c1}
 @media(max-width:760px){.theme-eternal-bloom .event-card{border-radius:120px 120px 4px 4px}.theme-eternal-bloom .event-img-wrap{height:250px;border-radius:120px 120px 0 0}.theme-eternal-bloom .gallery-item,.theme-eternal-bloom .gallery-item:nth-child(2n){border-radius:40px 40px 3px 3px}.theme-eternal-bloom .travel-card{gap:0}.theme-eternal-bloom .travel-text{border-radius:3px 54px 3px 3px}.theme-eternal-bloom .travel-img-wrap,.theme-eternal-bloom .travel-img-wrap::after{border-radius:130px 130px 3px 3px;min-height:360px}}
+@media(max-width:760px){.story-mosaic{grid-column:1;width:100%;max-width:540px;justify-self:center;margin:4px 0 0;aspect-ratio:1.16;gap:7px;padding:7px}.site .welcome .signature-couple{max-width:min(92vw,520px)}.invite-composition .invite-names{font-size:clamp(31px,8.6vw,44px)}}
+@media(max-width:600px){.invite-composition .invite-open{min-width:min(260px,calc(100vw - 40px));max-width:calc(100vw - 40px);gap:16px;padding-inline:20px}}
 
 /* Eternal Bloom intro — floral editorial art direction */
 .eternal-intro{position:absolute;inset:0;isolation:isolate;overflow:hidden;display:grid;place-items:center;color:#432634;background:#f5e2df}

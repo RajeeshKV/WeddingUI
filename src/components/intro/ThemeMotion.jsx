@@ -9,6 +9,17 @@ function FallingPetals({ color, count = 10, className = '' }) {
   return <FloatingPetals count={count} color={color} className={className} />;
 }
 
+function MidnightLuminance() {
+  return <>
+    <motion.div className="motion-midnight-spill" initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: [0, 0.42, 0.2, 0.34], scale: [0.8, 1, 1.03, 1] }}
+      transition={{ delay: 0.35, duration: 6.8, repeat: Infinity, ease: 'easeInOut' }} />
+    <motion.div className="motion-midnight-reflection" initial={{ opacity: 0, scaleX: 0.5 }}
+      animate={{ opacity: [0, 0.45, 0.16], scaleX: [0.5, 1, 0.88] }}
+      transition={{ delay: 1.05, duration: 3.4, repeat: Infinity, repeatDelay: 4.6, ease: 'easeInOut' }} />
+  </>;
+}
+
 function BloomReveal({ tone = '#d78391' }) {
   return <div className="motion-bloom-cluster">
     {[0, 1, 2, 3, 4].map((flower) => <motion.span key={flower} className={`motion-bloom motion-bloom--${flower + 1}`}
@@ -19,13 +30,19 @@ function BloomReveal({ tone = '#d78391' }) {
 }
 
 function MarigoldCanopy() {
-  return <div className="motion-marigold-canopy">
-    {[0, 1, 2, 3, 4, 5, 6].map((strand) => <motion.div key={strand} className="motion-marigold-strand"
-      style={{ '--strand': strand }} initial={{ scaleY: 0, opacity: 0 }}
-      animate={{ scaleY: 1, opacity: 1 }} transition={{ delay: 0.18 + strand * 0.1, duration: 1.25, ease: [0.18, 0.72, 0.18, 1] }}>
-      <span /><span /><span /><span /><span />
-    </motion.div>)}
-  </div>;
+  return <>
+    <motion.div className="motion-marigold-sunwash" initial={{ opacity: 0, x: '-35%' }}
+      animate={{ opacity: [0, 0.54, 0.28], x: ['-35%', '0%', '18%'] }}
+      transition={{ delay: 0.25, duration: 5.8, ease: [0.2, 0.72, 0.2, 1] }} />
+    <motion.svg className="motion-marigold-arch" viewBox="0 0 1440 900" preserveAspectRatio="none" aria-hidden="true">
+      <motion.path d="M-40 790V365C-40 132 156 18 720 18s760 114 760 347v425" pathLength="1"
+        initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 0.58 }}
+        transition={{ delay: 0.55, duration: 2.4, ease: 'easeInOut' }} />
+      <motion.path d="M25 788V372C25 170 205 75 720 75s695 95 695 297v416" pathLength="1"
+        initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 0.34 }}
+        transition={{ delay: 0.9, duration: 2.2, ease: 'easeInOut' }} />
+    </motion.svg>
+  </>;
 }
 
 function SakuraBranch() {
@@ -40,9 +57,20 @@ function SakuraBranch() {
 }
 
 function OliveLeaves() {
-  return <motion.svg className="motion-olive-branch" viewBox="0 0 320 600" initial={{ opacity: 0, x: -18 }} animate={{ opacity: 1, x: 0, rotate: [-1.8, 1.8, -1.8] }} transition={{ opacity: { delay: 0.25, duration: 1.6 }, x: { delay: 0.25, duration: 1.6 }, rotate: { delay: 1.8, duration: 8, repeat: Infinity, ease: 'easeInOut' } }}>
-    <path className="motion-olive-stem" d="M20 590C104 469 55 352 147 251S218 113 296 18" />
-    {[...Array(9)].map((_, i) => <ellipse key={i} className="motion-olive-leaf" cx={74 + (i % 2) * 58} cy={455 - i * 47} rx="14" ry="38" transform={`rotate(${i % 2 ? 48 : -42} ${74 + (i % 2) * 58} ${455 - i * 47})`} />)}
+  const leaves = [
+    'M78 557C35 546 20 512 27 479c38 5 65 29 51 78Z', 'M91 531c44-13 64-43 58-81-37 9-61 34-58 81Z',
+    'M121 464c-40-8-59-36-54-70 36 3 60 25 54 70Z', 'M137 432c42-16 60-46 51-80-36 12-58 38-51 80Z',
+    'M173 358c-41-6-62-31-61-66 37 1 63 21 61 66Z', 'M187 330c39-20 53-51 41-84-34 16-53 43-41 84Z',
+    'M220 253c-38 2-61-19-67-52 35-6 64 10 67 52Z', 'M232 220c35-25 44-57 27-88-31 21-45 50-27 88Z',
+    'M274 139c-34 7-58-9-69-39 31-11 60-1 69 39Z', 'M286 111c29-27 34-57 14-84-26 23-35 51-14 84Z',
+  ];
+  return <motion.svg className="motion-olive-branch" viewBox="0 0 360 680" initial={{ opacity: 0, x: -24 }}
+    animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2, duration: 1.8, ease: [0.2, 0.7, 0.2, 1] }}>
+    <motion.path className="motion-olive-stem" d="M20 670C83 590 102 537 124 466S159 355 190 323s29-93 43-133S269 81 337 14" pathLength="1"
+      initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ delay: 0.3, duration: 2.7, ease: 'easeInOut' }} />
+    {leaves.map((d, i) => <motion.path key={i} className="motion-olive-leaf" d={d}
+      initial={{ opacity: 0, scale: 0.76, rotate: i % 2 ? -8 : 7 }} animate={{ opacity: 0.84, scale: 1, rotate: [0, i % 2 ? -2 : 2, 0] }}
+      transition={{ opacity: { delay: 0.45 + i * 0.12, duration: 0.75 }, scale: { delay: 0.45 + i * 0.12, duration: 0.85 }, rotate: { delay: 2 + i * 0.13, duration: 6.5 + (i % 3), repeat: Infinity, ease: 'easeInOut' } }} />)}
   </motion.svg>;
 }
 
@@ -55,11 +83,17 @@ function Fireflies() {
 
 function OceanTides() {
   return <div className="motion-ocean-tides">
-    {[0, 1, 2].map((layer) => <motion.svg key={layer} viewBox="0 0 1440 260" preserveAspectRatio="none" style={{ '--tide': layer }}
-      animate={{ x: layer % 2 ? ['-3%', '0%', '-3%'] : ['0%', '-3%', '0%'], y: [0, layer % 2 ? -8 : 7, 0] }} transition={{ duration: 8 + layer * 2, repeat: Infinity, ease: 'easeInOut' }}>
-      <path d={`M0 ${96 + layer * 28} C180 ${30 + layer * 20} 330 ${175 + layer * 10} 520 ${95 + layer * 18} S860 ${35 + layer * 28} 1050 ${110 + layer * 18} S1280 ${155 - layer * 16} 1440 ${76 + layer * 18} V260 H0Z`} />
-    </motion.svg>)}
-    <motion.div className="motion-ocean-glint" animate={{ opacity: [0.08, 0.42, 0.12], scaleX: [0.8, 1.12, 0.8] }} transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }} />
+    <motion.svg className="motion-ocean-foam" viewBox="0 0 1440 300" preserveAspectRatio="none">
+      <motion.path d="M-20 112C160 74 250 154 422 119s247-43 372 2 228 28 340-8 216-22 326 14" pathLength="1"
+        initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: [0, 0.48, 0.23] }}
+        transition={{ delay: 0.7, duration: 3.4, ease: 'easeInOut' }} />
+      <motion.path d="M-20 168C128 141 247 208 390 177s263-32 391 4 218 25 337-4 215-20 342 9" pathLength="1"
+        initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: [0, 0.32, 0.16] }}
+        transition={{ delay: 1.2, duration: 3.6, ease: 'easeInOut' }} />
+    </motion.svg>
+    <motion.div className="motion-ocean-glint" initial={{ opacity: 0, x: '-28%' }}
+      animate={{ opacity: [0, 0.34, 0.12], x: ['-28%', '12%', '38%'], scaleX: [0.72, 1.08, 0.86] }}
+      transition={{ delay: 0.65, duration: 7.4, repeat: Infinity, repeatDelay: 1.5, ease: 'easeInOut' }} />
   </div>;
 }
 
@@ -78,9 +112,13 @@ function StarMap({ romantic = false }) {
 function CinemaBeam() {
   return <>
     <FilmGrain opacity={0.035} animate={false} />
-    <motion.div className="motion-cinema-beam" initial={{ opacity: 0, scaleX: 0.78 }} animate={{ opacity: [0, 0.27, 0.16], scaleX: [0.78, 1, 1.04] }} transition={{ delay: 0.35, duration: 2.4, ease: 'easeOut' }} />
-    <motion.div className="motion-cinema-flicker" animate={{ opacity: [0.05, 0.12, 0.04, 0.09, 0.05] }} transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }} />
-    <div className="motion-film-gate"><span /><span /><span /><span /><span /><span /><span /><span /></div>
+    <motion.div className="motion-cinema-beam" initial={{ opacity: 0, rotate: '-5deg', scaleX: 0.58 }}
+      animate={{ opacity: [0, 0.22, 0.14], rotate: ['-5deg', '1deg', '-1deg'], scaleX: [0.58, 1, 0.9] }}
+      transition={{ delay: 0.32, duration: 5.5, ease: 'easeInOut' }} />
+    <motion.div className="motion-cinema-spot" initial={{ opacity: 0, scale: 0.72 }}
+      animate={{ opacity: [0, 0.48, 0.3], scale: [0.72, 1, 1.04] }}
+      transition={{ delay: 1.05, duration: 2.1, ease: [0.2, 0.72, 0.2, 1] }} />
+    <motion.div className="motion-cinema-flicker" animate={{ opacity: [0.025, 0.06, 0.035, 0.055, 0.025] }} transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }} />
   </>;
 }
 
@@ -110,10 +148,38 @@ function EditorialFrame() {
 
 function TuscanSunset() {
   return <>
-    <motion.div className="motion-sunset-halo" initial={{ opacity: 0, scale: 0.72 }} animate={{ opacity: [0, 0.62, 0.36], scale: [0.72, 1.1, 1.2] }} transition={{ delay: 0.28, duration: 2.6, ease: 'easeOut' }} />
-    <motion.div className="motion-sunset-disc" initial={{ y: '-3vh', opacity: 0 }} animate={{ y: ['-3vh', '7vh'], opacity: [0, 0.8, 0.56] }} transition={{ delay: 0.42, duration: 8, ease: 'easeInOut' }} />
-    <motion.div className="motion-sunset-ray" initial={{ opacity: 0, rotate: -8 }} animate={{ opacity: [0, 0.22, 0.12], rotate: 0 }} transition={{ delay: 0.7, duration: 2.8 }} />
+    <motion.div className="motion-tuscan-dawn" initial={{ opacity: 0, x: '-16%' }}
+      animate={{ opacity: [0, 0.44, 0.26], x: ['-16%', '0%', '5%'] }}
+      transition={{ delay: 0.3, duration: 5.2, ease: [0.2, 0.72, 0.2, 1] }} />
+    <motion.div className="motion-tuscan-horizon" initial={{ opacity: 0, scaleX: 0.45 }}
+      animate={{ opacity: [0, 0.7, 0.26], scaleX: [0.45, 1, 1.02] }}
+      transition={{ delay: 0.8, duration: 2.4, ease: 'easeOut' }} />
   </>;
+}
+
+function SakuraLight() {
+  return <>
+    <SakuraBranch />
+    <motion.div className="motion-sakura-sunlight" initial={{ opacity: 0, x: '-30%' }}
+      animate={{ opacity: [0, 0.34, 0.17], x: ['-30%', '2%', '24%'] }}
+      transition={{ delay: 0.45, duration: 6.2, ease: 'easeInOut' }} />
+    <motion.div className="motion-sakura-waterline" initial={{ scaleX: 0, opacity: 0 }}
+      animate={{ scaleX: [0, 1, 0.9], opacity: [0, 0.38, 0.2] }}
+      transition={{ delay: 1.2, duration: 3.3, ease: 'easeInOut' }} />
+  </>;
+}
+
+function LunarPhaseReveal() {
+  return <svg className="motion-lunar-phase" viewBox="0 0 100 100" aria-hidden="true">
+    <motion.circle cx="72" cy="27" r="10.5" className="motion-lunar-halo" initial={{ opacity: 0, scale: 0.65 }}
+      animate={{ opacity: [0, 0.28, 0.14], scale: [0.65, 1, 1.04] }} transition={{ delay: 0.45, duration: 2.8, ease: 'easeOut' }} />
+    <motion.path d="M73 15a12 12 0 1 0 0 24c-6.7-5.8-6.7-18.2 0-24Z" className="motion-lunar-crescent"
+      initial={{ opacity: 0, rotate: -22, scale: 0.5 }} animate={{ opacity: 0.9, rotate: 0, scale: 1 }}
+      transition={{ delay: 0.65, duration: 1.8, ease: [0.2, 0.72, 0.2, 1] }} />
+    <motion.path d="M8 65c21-9 40-11 61-2s32 8 48 0" className="motion-lunar-arc" pathLength="1"
+      initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 0.48 }}
+      transition={{ delay: 1.05, duration: 2.8, ease: 'easeInOut' }} />
+  </svg>;
 }
 
 function PearlSheen() {
@@ -136,11 +202,11 @@ function EternalVine() {
 function MotionForTheme({ themeId }) {
   switch (themeId) {
     case 'eternal-bloom': return <><FallingPetals color="#e9a6b4" count={11} /><FallingPetals color="#fff0e7" count={6} className="invite-petals-back" /><EternalVine /></>;
-    case 'midnight-vows': return <><motion.div className="motion-candle-glow" animate={{ opacity: [0.12, 0.5, 0.23, 0.42], scale: [0.96, 1.04, 1, 1.03] }} transition={{ duration: 4.8, repeat: Infinity, ease: 'easeInOut' }} /><motion.div className="motion-gold-glint" initial={{ opacity: 0, x: '-30%' }} animate={{ opacity: [0, 0.64, 0], x: ['-30%', '0%', '26%'] }} transition={{ delay: 1, duration: 4.2, repeat: Infinity, repeatDelay: 5, ease: 'easeInOut' }} /></>;
-    case 'marigold-mandap': return <><MarigoldCanopy /><FallingPetals color="#e6a12d" count={8} /></>;
+    case 'midnight-vows': return <><MidnightLuminance /><motion.div className="motion-candle-glow" animate={{ opacity: [0.12, 0.5, 0.23, 0.42], scale: [0.96, 1.04, 1, 1.03] }} transition={{ duration: 4.8, repeat: Infinity, ease: 'easeInOut' }} /><motion.div className="motion-gold-glint" initial={{ opacity: 0, x: '-30%' }} animate={{ opacity: [0, 0.64, 0], x: ['-30%', '0%', '26%'] }} transition={{ delay: 1, duration: 4.2, repeat: Infinity, repeatDelay: 5, ease: 'easeInOut' }} /></>;
+    case 'marigold-mandap': return <MarigoldCanopy />;
     case 'tuscan-romance': return <TuscanSunset />;
     case 'pearl-atelier': return <><PearlSheen /><PearlGlints /></>;
-    case 'sakura-reverie': return <><SakuraBranch /><FallingPetals color="#f7dfe2" count={7} /></>;
+    case 'sakura-reverie': return <SakuraLight />;
     case 'secret-garden': return <><OliveLeaves /><Fireflies /><motion.div className="motion-garden-mist" animate={{ opacity: [0.04, 0.2, 0.08], x: ['-6%', '4%', '-6%'] }} transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }} /></>;
     case 'ocean-serenade': return <OceanTides />;
     case 'cinema-paradiso': return <CinemaBeam />;
@@ -149,7 +215,7 @@ function MotionForTheme({ themeId }) {
     case 'modern-luxury': return <WindowLight />;
     case 'royal-heritage': return <RoyalCurtain />;
     case 'minimal-editorial': return <EditorialFrame />;
-    case 'celestial-romance': return <StarMap romantic />;
+    case 'celestial-romance': return <LunarPhaseReveal />;
     default: return <BloomReveal />;
   }
 }

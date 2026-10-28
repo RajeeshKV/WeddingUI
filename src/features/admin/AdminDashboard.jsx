@@ -12,6 +12,7 @@ import {
   approvePhoto, rejectPhoto, deletePhoto, bulkApprovePhotos,
   updateWeddingConfig, changePassword, getAdminWeddingConfig,
 } from '../../services/api/admin.js';
+import { normalizePage } from '../../services/api/public.js';
 
 // ─────────────────────────────────────────────────────────────────
 // Shared primitives
@@ -347,23 +348,33 @@ function PhotoModeration() {
   const [busy,     setBusy]     = useState(false);
   const [msg,      setMsg]      = useState({ text: '', ok: true });
   const [preview,  setPreview]  = useState(null);
+  const [pendingPage, setPendingPage] = useState(1);
+  const [allPage, setAllPage] = useState(1);
+  const [pendingMeta, setPendingMeta] = useState({ totalPages: 0, totalCount: 0 });
+  const [allMeta, setAllMeta] = useState({ totalPages: 0, totalCount: 0 });
 
   const load = useCallback(async () => {
-    setLoading(true); setMsg({ text: '', ok: true });
+    setLoading(true); setError(''); setMsg({ text: '', ok: true });
     try {
       const [pend, allPhotos] = await Promise.allSettled([
-        getPendingPhotos(),
-        getAllAdminPhotos(),
+        getPendingPhotos({ page: pendingPage, pageSize: 20 }),
+        getAllAdminPhotos({ page: allPage, pageSize: 20 }),
       ]);
-      setPending(pend.status === 'fulfilled' && Array.isArray(pend.value) ? pend.value : []);
-      setAll(allPhotos.status === 'fulfilled' && Array.isArray(allPhotos.value) ? allPhotos.value : []);
+      if (pend.status === 'rejected') throw pend.reason;
+      if (allPhotos.status === 'rejected') throw allPhotos.reason;
+      const pendingResult = normalizePage(pend.value, pendingPage, 20);
+      const allResult = normalizePage(allPhotos.value, allPage, 20);
+      setPending(pendingResult.items);
+      setAll(allResult.items);
+      setPendingMeta(pendingResult);
+      setAllMeta(allResult);
       setSelected(new Set());
     } catch (e) {
       setError(e.message || 'Failed to load photos.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [pendingPage, allPage]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -466,6 +477,7 @@ function PhotoModeration() {
             ))}
           </div>
         )}
+        <PhotoPagination page={pendingPage} setPage={setPendingPage} meta={pendingMeta} />
       </div>
 
       {/* ── Section 2: Approved Photos ── */}
@@ -525,12 +537,26 @@ function PhotoModeration() {
           </div>
         </div>
       )}
+      <PhotoPagination page={allPage} setPage={setAllPage} meta={allMeta} />
 
       {/* Preview lightbox */}
       <AnimatePresence>
         {preview && <PhotoLightbox key="lb" photo={preview} onClose={() => setPreview(null)} />}
       </AnimatePresence>
     </div>
+  );
+}
+
+function PhotoPagination({ page, setPage, meta }) {
+  if (!meta?.totalPages || meta.totalPages <= 1) return null;
+  return (
+    <nav aria-label="Photo pages" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, marginTop: 18 }}>
+      <button type="button" onClick={() => setPage(current => Math.max(1, current - 1))} disabled={page <= 1}
+        style={{ ...ghostBtn, opacity: page <= 1 ? 0.45 : 1 }} aria-label="Previous photo page">‹ Previous</button>
+      <span style={{ fontSize: 11, color: '#6A6258' }}>Page {page} of {meta.totalPages} · {meta.totalCount} photos</span>
+      <button type="button" onClick={() => setPage(current => Math.min(meta.totalPages, current + 1))} disabled={page >= meta.totalPages}
+        style={{ ...ghostBtn, opacity: page >= meta.totalPages ? 0.45 : 1 }} aria-label="Next photo page">Next ›</button>
+    </nav>
   );
 }
 

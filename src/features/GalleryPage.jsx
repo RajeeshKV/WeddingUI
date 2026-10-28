@@ -7,10 +7,12 @@
  */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ArrowUpRight, Loader2, ImageOff, RefreshCw } from 'lucide-react';
-import { getPublicGallery, getWeddingConfig } from '../services/api/public.js';
+import { X, ArrowUpRight, Loader2, ImageOff, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
+import { getPublicGallery, getWeddingConfig, normalizePage } from '../services/api/public.js';
+import { GuestPhotoUpload } from './GuestPhotoUpload.jsx';
 
 const SLUG = import.meta.env.VITE_WEDDING_SLUG || '';
+const PAGE_SIZE = 20;
 
 // Distributes photos into N columns using round-robin so they fill evenly.
 // Images determine their own height via natural aspect ratio.
@@ -215,6 +217,8 @@ export function GalleryPage() {
   const [loading,  setLoading] = useState(true);
   const [error,    setError]   = useState('');
   const [lightbox, setLightbox] = useState(null);
+  const [page, setPage] = useState(1);
+  const [pageInfo, setPageInfo] = useState({ page: 1, pageSize: PAGE_SIZE, totalCount: 0, totalPages: 0 });
   const columnCount = useColumnCount();
 
   const load = useCallback(async () => {
@@ -226,21 +230,21 @@ export function GalleryPage() {
     setLoading(true); setError('');
     try {
       const [gallery, cfg] = await Promise.allSettled([
-        getPublicGallery(),
+        getPublicGallery({ page, pageSize: PAGE_SIZE }),
         getWeddingConfig(),
       ]);
 
-      const raw = gallery.status === 'fulfilled' ? gallery.value : [];
-      // Guard: API may return null or non-array on error
-      const photos = Array.isArray(raw) ? raw : [];
+      if (gallery.status === 'rejected') throw gallery.reason;
+      const result = normalizePage(gallery.value, page, PAGE_SIZE);
       if (cfg.status === 'fulfilled') setConfig(cfg.value);
-      setPhotos(photos);
+      setPhotos(result.items);
+      setPageInfo(result);
     } catch (e) {
       setError(e.message || 'Failed to load gallery.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [page]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -306,6 +310,10 @@ export function GalleryPage() {
       {/* Content */}
       <main style={{ maxWidth: 1400, margin: '0 auto', padding: 'clamp(24px,4vw,48px) clamp(12px,3vw,32px) 80px' }}>
 
+        <div style={{ maxWidth: 680, margin: '0 auto 28px' }}>
+          <GuestPhotoUpload weddingConfig={config} onUploaded={() => load()} />
+        </div>
+
         {/* Loading state */}
         {loading && (
           <div>
@@ -368,6 +376,18 @@ export function GalleryPage() {
           </div>
         )}
 
+        {!loading && !error && pageInfo.totalPages > 1 && (
+          <nav aria-label="Gallery pages" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 18, marginTop: 32 }}>
+            <button type="button" onClick={() => setPage(current => Math.max(1, current - 1))} disabled={page <= 1}
+              style={pageButtonStyle(page <= 1)}><ChevronLeft size={15} /> Previous</button>
+            <span style={{ fontSize: 12, color: 'var(--t-muted,#7A6A60)' }}>
+              Page {pageInfo.page} of {pageInfo.totalPages} · {pageInfo.totalCount} photos
+            </span>
+            <button type="button" onClick={() => setPage(current => Math.min(pageInfo.totalPages, current + 1))} disabled={page >= pageInfo.totalPages}
+              style={pageButtonStyle(page >= pageInfo.totalPages)}>Next <ChevronRight size={15} /></button>
+          </nav>
+        )}
+
         {/* Back link */}
         {!loading && (
           <div style={{ textAlign: 'center', marginTop: 56 }}>
@@ -422,5 +442,12 @@ export function GalleryPage() {
     </div>
   );
 }
+
+const pageButtonStyle = (disabled) => ({
+  display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 13px',
+  borderRadius: 999, border: '1px solid var(--t-border,#D8C9CE)',
+  background: 'var(--t-surface-hi,#fff)', color: 'var(--t-fg,#49323D)',
+  fontSize: 12, fontWeight: 600, cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.45 : 1,
+});
 
 export default GalleryPage;

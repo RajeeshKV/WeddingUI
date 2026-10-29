@@ -208,77 +208,54 @@ function Overview() {
         <Btn size="sm" onClick={load}><RefreshCw size={12} /> Refresh</Btn>
       </SectionHeader>
 
-      {/* Photos row */}
+      {/* Photos — compact inline row */}
       <p style={sLabel}>PHOTOS</p>
-      <div className="ad-grid-3" style={{ marginBottom: 20 }}>
-        {[
-          { label: 'Total',    value: stats.totalPhotos,    color: T.violet, Icon: Images       },
-          { label: 'Pending',  value: stats.pendingPhotos,  color: T.amber,  Icon: Clock        },
-          { label: 'Approved', value: stats.approvedPhotos, color: T.success,Icon: CheckCircle  },
-        ].map(({ label, value, color, Icon }) => (
-          <Card key={label} style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 14 }}>
-            <div style={{ width: 40, height: 40, borderRadius: 9, background: `${color}15`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Icon size={18} color={color} aria-hidden="true" />
-            </div>
-            <div>
-              <p style={{ fontSize: 10, fontWeight: 700, color: T.faint, letterSpacing: '0.08em',
-                textTransform: 'uppercase', margin: '0 0 3px' }}>{label}</p>
-              <p style={{ fontSize: 26, fontWeight: 700, color: T.fg, margin: 0, lineHeight: 1,
-                fontFamily: "'Cormorant Garamond',Georgia,serif" }}>{value ?? 0}</p>
-            </div>
-          </Card>
-        ))}
-      </div>
-
-      {/* RSVPs row — 4 inline */}
-      <p style={sLabel}>RSVP SUMMARY</p>
       <div className="ad-rsvp-stat-row" style={{ marginBottom: 20 }}>
         {[
-          { label: 'Total',   value: total,        color: T.primary },
-          { label: 'Attending',     value: attending,    color: T.success },
-          { label: 'Not Going', value: notAttending, color: T.danger  },
-          { label: 'Maybe',         value: maybe,        color: T.amber   },
-        ].map(({ label, value, color }) => (
-          <div key={label} style={{ flex: '1 1 0', padding: '16px 18px', background: T.surface,
-            border: `1px solid ${T.border}`, borderRadius: T.r, minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-              <div style={{ width: 8, height: 8, borderRadius: '50%', background: color, flexShrink: 0 }} aria-hidden="true" />
-              <p style={{ fontSize: 10, fontWeight: 700, color: T.faint, letterSpacing: '0.08em',
-                textTransform: 'uppercase', margin: 0, lineHeight: 1.3 }}>{label}</p>
+          { label: 'Total',    value: stats.totalPhotos,    color: T.violet, Icon: Images      },
+          { label: 'Pending',  value: stats.pendingPhotos,  color: T.amber,  Icon: Clock       },
+          { label: 'Approved', value: stats.approvedPhotos, color: T.success,Icon: CheckCircle },
+        ].map(({ label, value, color, Icon }) => (
+          <div key={label} style={{ flex: '1 1 0', padding: '12px 14px', background: T.surface,
+            border: `1px solid ${T.border}`, borderRadius: T.r, minWidth: 0,
+            display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 32, height: 32, borderRadius: 7, background: `${color}14`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Icon size={15} color={color} aria-hidden="true" />
             </div>
-            <p style={{ fontSize: 30, fontWeight: 700, color: T.fg, margin: 0, lineHeight: 1,
-              fontFamily: "'Cormorant Garamond',Georgia,serif" }}>{value ?? 0}</p>
+            <div style={{ minWidth: 0 }}>
+              <p style={{ fontSize: 9, fontWeight: 700, color: T.faint, letterSpacing: '0.08em',
+                textTransform: 'uppercase', margin: '0 0 2px', lineHeight: 1 }}>{label}</p>
+              <p style={{ fontSize: 22, fontWeight: 700, color: T.fg, margin: 0, lineHeight: 1,
+                fontFamily: "'Cormorant Garamond',Georgia,serif" }}>{value ?? 0}</p>
+            </div>
           </div>
         ))}
       </div>
 
-      {/* Breakdown bars */}
-      <Card p={20}>
-        <p style={{ ...sLabel, marginBottom: 12 }}>RESPONSE BREAKDOWN</p>
+      {/* RSVPs — 3 tiles, no Total */}
+      <p style={sLabel}>GUESTS</p>
+      <div className="ad-rsvp-stat-row" style={{ marginBottom: 8 }}>
         {[
-          { label: 'Attending',     value: attending,    color: T.success },
+          { label: 'Attending', value: attending,    color: T.success },
           { label: 'Not Going', value: notAttending, color: T.danger  },
-          { label: 'Maybe',         value: maybe,        color: T.amber   },
-        ].map(({ label, value, color }) => {
-          const pct = total > 0 ? Math.round((value / total) * 100) : 0;
-          return (
-            <div key={label} style={{ marginBottom: 10 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                <span style={{ fontSize: 12, fontWeight: 500, color: T.fg }}>{label}</span>
-                <span style={{ fontSize: 12, fontWeight: 700, color }}>
-                  {value} <span style={{ color: T.faint, fontWeight: 400 }}>({pct}%)</span>
-                </span>
-              </div>
-              <div style={{ height: 4, background: T.border, borderRadius: 99, overflow: 'hidden' }}>
-                <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }}
-                  transition={{ duration: 0.85, ease: [0.2, 0.8, 0.2, 1] }}
-                  style={{ height: '100%', background: color, borderRadius: 99 }} />
-              </div>
+          { label: 'Maybe',     value: maybe,        color: T.amber   },
+        ].map(({ label, value, color }) => (
+          <div key={label} style={{ flex: '1 1 0', padding: '12px 14px', background: T.surface,
+            border: `1px solid ${T.border}`, borderRadius: T.r, minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+              <div style={{ width: 7, height: 7, borderRadius: '50%', background: color, flexShrink: 0 }} aria-hidden="true" />
+              <p style={{ fontSize: 9, fontWeight: 700, color: T.faint, letterSpacing: '0.08em',
+                textTransform: 'uppercase', margin: 0, lineHeight: 1.3 }}>{label}</p>
             </div>
-          );
-        })}
-      </Card>
+            <p style={{ fontSize: 22, fontWeight: 700, color: T.fg, margin: 0, lineHeight: 1,
+              fontFamily: "'Cormorant Garamond',Georgia,serif" }}>{value ?? 0}</p>
+          </div>
+        ))}
+      </div>
+      <p style={{ fontSize: 10, color: T.faint, margin: '0 0 16px', lineHeight: 1.4 }}>
+        Based on RSVP status counts. Tap RSVPs for the full guest list.
+      </p>
     </div>
   );
 }
@@ -342,23 +319,22 @@ function RsvpSection() {
         <Btn size="sm" onClick={() => load(apiPage, filter)}><RefreshCw size={12} /> Refresh</Btn>
       </SectionHeader>
 
-      {/* 4-in-a-row stat strip */}
+      {/* 3-tile stat strip — no Total, guest counts */}
       {stats && (
-        <div className="ad-rsvp-stat-row" style={{ marginBottom: 20 }}>
+        <div className="ad-rsvp-stat-row" style={{ marginBottom: 16 }}>
           {[
-            { label: 'Total',         value: total,        color: T.primary },
-            { label: 'Attending',     value: attending,    color: T.success },
+            { label: 'Attending', value: attending,    color: T.success },
             { label: 'Not Going', value: notAttending, color: T.danger  },
-            { label: 'Maybe',         value: maybe,        color: T.amber   },
+            { label: 'Maybe',     value: maybe,        color: T.amber   },
           ].map(({ label, value, color }) => (
-            <div key={label} style={{ flex: '1 1 0', padding: '14px 16px', background: T.surface,
+            <div key={label} style={{ flex: '1 1 0', padding: '12px 14px', background: T.surface,
               border: `1px solid ${T.border}`, borderRadius: T.r, minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 7 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
                 <div style={{ width: 7, height: 7, borderRadius: '50%', background: color, flexShrink: 0 }} aria-hidden="true" />
                 <p style={{ fontSize: 9, fontWeight: 700, color: T.faint, letterSpacing: '0.09em',
                   textTransform: 'uppercase', margin: 0, lineHeight: 1.3 }}>{label}</p>
               </div>
-              <p style={{ fontSize: 28, fontWeight: 700, color: T.fg, margin: 0, lineHeight: 1,
+              <p style={{ fontSize: 22, fontWeight: 700, color: T.fg, margin: 0, lineHeight: 1,
                 fontFamily: "'Cormorant Garamond',Georgia,serif" }}>{value ?? 0}</p>
             </div>
           ))}
@@ -813,7 +789,30 @@ function WeddingSettings() {
 
   return (
     <div>
-      <SectionHeader title="Settings" />
+      <SectionHeader title="Settings"
+        sub={isDirty ? 'You have unsaved changes' : null}>
+        {isDirty && (
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <button type="button" onClick={() => orig && setForm({ ...orig })}
+              disabled={saving}
+              style={{ padding: '7px 13px', borderRadius: 6, border: `1px solid ${T.border}`,
+                background: 'transparent', color: T.muted, fontSize: 12, fontWeight: 500,
+                cursor: 'pointer', fontFamily: "'Jost',sans-serif" }}>
+              Discard
+            </button>
+            <button type="button" onClick={doSave} disabled={saving}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '7px 16px', borderRadius: 6, border: 'none',
+                background: saving ? T.border : T.primary, color: saving ? T.muted : '#fff',
+                fontSize: 12, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer',
+                fontFamily: "'Jost',sans-serif", transition: T.ease }}>
+              {saving ? <><Spin size={12} color={T.muted} /> Saving…</> : <><Save size={12} /> Save</>}
+            </button>
+          </div>
+        )}
+        {msg   && <span style={{ fontSize: 12, color: T.success, fontWeight: 600 }} role="status">{msg}</span>}
+        {error && <span style={{ fontSize: 12, color: T.danger,  fontWeight: 600 }} role="alert">{error}</span>}
+      </SectionHeader>
       <form onSubmit={save}>
         <Card style={{ padding: '20px 22px', marginBottom: 14 }}>
           <p style={sLabel}>Wedding Details</p>
@@ -844,86 +843,6 @@ function WeddingSettings() {
           </div>
         </Card>
       </form>
-
-      {/* Sticky save bar — inside scroll flow, sticks to bottom when reached */}
-      <AnimatePresence>
-        {isDirty && (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 6 }}
-            transition={{ duration: 0.2, ease: [0.2, 0.8, 0.2, 1] }}
-            style={{
-              position: 'sticky',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              zIndex: 20,
-              marginTop: 16,
-              padding: '12px 16px',
-              background: T.fg,
-              borderRadius: T.r,
-              boxShadow: '0 -2px 0 rgba(0,0,0,0.06), 0 4px 24px rgba(0,0,0,0.18)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 12,
-              flexWrap: 'wrap',
-            }}
-            role="status"
-            aria-live="polite"
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {/* Amber dot indicator */}
-              <div style={{ width: 7, height: 7, borderRadius: '50%', background: T.amber, flexShrink: 0 }} aria-hidden="true" />
-              <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', fontFamily: "'Jost',sans-serif", fontWeight: 500 }}>
-                Unsaved changes
-              </span>
-              {msg   && <span style={{ fontSize: 12, color: '#86EFAC', fontWeight: 600 }}>{msg}</span>}
-              {error && <span style={{ fontSize: 12, color: '#FCA5A5', fontWeight: 600 }}>{error}</span>}
-            </div>
-
-            <div style={{ display: 'flex', gap: 8 }}>
-              {/* Discard */}
-              <button
-                type="button"
-                onClick={() => orig && setForm({ ...orig })}
-                disabled={saving}
-                style={{
-                  padding: '7px 14px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.15)',
-                  background: 'transparent', color: 'rgba(255,255,255,0.55)',
-                  fontSize: 12, fontWeight: 500, cursor: 'pointer',
-                  fontFamily: "'Jost',sans-serif",
-                }}
-              >
-                Discard
-              </button>
-
-              {/* Save */}
-              <button
-                type="button"
-                onClick={doSave}
-                disabled={saving}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 7,
-                  padding: '7px 18px', borderRadius: 6, border: 'none',
-                  background: saving ? 'rgba(255,255,255,0.2)' : T.primary,
-                  color: '#fff', fontSize: 12, fontWeight: 600,
-                  cursor: saving ? 'not-allowed' : 'pointer',
-                  fontFamily: "'Jost',sans-serif",
-                  opacity: saving ? 0.7 : 1,
-                  transition: T.ease,
-                }}
-              >
-                {saving
-                  ? <><Spin size={12} color="#fff" /> Saving…</>
-                  : <><Save size={12} /> Save changes</>
-                }
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

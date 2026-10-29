@@ -773,8 +773,7 @@ function WeddingSettings() {
       .finally(() => setLoading(false));
   }, []);
 
-  const save = async (e) => {
-    e.preventDefault();
+  const doSave = async () => {
     setSaving(true); setMsg(''); setError('');
     try {
       const p = {};
@@ -789,6 +788,8 @@ function WeddingSettings() {
     } catch (err) { setError(err.message || 'Update failed.'); }
     finally { setSaving(false); }
   };
+
+  const save = (e) => { e.preventDefault(); doSave(); };
 
   if (loading) return <PageLoader />;
 
@@ -842,15 +843,67 @@ function WeddingSettings() {
             <Toggle name="autoApprovePhotos" label="Auto-approve photos" desc="Bypass manual review for uploaded photos" />
           </div>
         </Card>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <Btn type="submit" variant="primary" disabled={!isDirty || saving}>
-            {saving ? <><Spin size={12} color="#fff" /> Saving…</> : <><Save size={12} /> Save changes</>}
-          </Btn>
-          {isDirty && !saving && <span style={{ fontSize: 12, color: T.amber, fontWeight: 500 }}>Unsaved changes</span>}
-          {msg   && <span style={{ fontSize: 12, color: T.success }} role="status">{msg}</span>}
-          {error && <span style={{ fontSize: 12, color: T.danger  }} role="alert">{error}</span>}
-        </div>
       </form>
+
+      {/* Floating save bar — appears when form is dirty */}
+      <AnimatePresence>
+        {isDirty && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 12 }}
+            transition={{ duration: 0.22, ease: [0.2, 0.8, 0.2, 1] }}
+            style={{
+              position: 'fixed',
+              bottom: 'calc(env(safe-area-inset-bottom, 0px) + 72px)',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 50,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              padding: '10px 14px 10px 16px',
+              background: T.sidebar,
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: 999,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.28)',
+              backdropFilter: 'blur(12px)',
+              whiteSpace: 'nowrap',
+            }}
+            role="status"
+            aria-live="polite"
+          >
+            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', fontFamily: "'Jost',sans-serif" }}>
+              You have unsaved changes
+            </span>
+
+            {/* Success/error inline */}
+            {msg   && <span style={{ fontSize: 12, color: '#86EFAC', fontWeight: 600 }}>{msg}</span>}
+            {error && <span style={{ fontSize: 12, color: '#FCA5A5', fontWeight: 600 }}>{error}</span>}
+
+            <button
+              type="button"
+              onClick={doSave}
+              disabled={saving}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 7,
+                padding: '7px 16px', borderRadius: 999, border: 'none',
+                background: saving ? 'rgba(255,255,255,0.18)' : T.primary,
+                color: '#fff', fontSize: 12, fontWeight: 600,
+                cursor: saving ? 'not-allowed' : 'pointer',
+                fontFamily: "'Jost',sans-serif",
+                transition: T.ease,
+                opacity: saving ? 0.7 : 1,
+              }}
+            >
+              {saving
+                ? <><Spin size={12} color="#fff" /> Saving…</>
+                : <><Save size={12} /> Save changes</>
+              }
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

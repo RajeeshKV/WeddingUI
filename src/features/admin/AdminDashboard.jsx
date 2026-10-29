@@ -235,9 +235,9 @@ function Overview() {
       <p style={sLabel}>RSVP SUMMARY</p>
       <div className="ad-rsvp-stat-row" style={{ marginBottom: 20 }}>
         {[
-          { label: 'Total RSVPs',   value: total,        color: T.primary },
+          { label: 'Total',   value: total,        color: T.primary },
           { label: 'Attending',     value: attending,    color: T.success },
-          { label: 'Not Attending', value: notAttending, color: T.danger  },
+          { label: 'Not Going', value: notAttending, color: T.danger  },
           { label: 'Maybe',         value: maybe,        color: T.amber   },
         ].map(({ label, value, color }) => (
           <div key={label} style={{ flex: '1 1 0', padding: '16px 18px', background: T.surface,
@@ -245,7 +245,7 @@ function Overview() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
               <div style={{ width: 8, height: 8, borderRadius: '50%', background: color, flexShrink: 0 }} aria-hidden="true" />
               <p style={{ fontSize: 10, fontWeight: 700, color: T.faint, letterSpacing: '0.08em',
-                textTransform: 'uppercase', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</p>
+                textTransform: 'uppercase', margin: 0, lineHeight: 1.3 }}>{label}</p>
             </div>
             <p style={{ fontSize: 30, fontWeight: 700, color: T.fg, margin: 0, lineHeight: 1,
               fontFamily: "'Cormorant Garamond',Georgia,serif" }}>{value ?? 0}</p>
@@ -258,7 +258,7 @@ function Overview() {
         <p style={{ ...sLabel, marginBottom: 12 }}>RESPONSE BREAKDOWN</p>
         {[
           { label: 'Attending',     value: attending,    color: T.success },
-          { label: 'Not Attending', value: notAttending, color: T.danger  },
+          { label: 'Not Going', value: notAttending, color: T.danger  },
           { label: 'Maybe',         value: maybe,        color: T.amber   },
         ].map(({ label, value, color }) => {
           const pct = total > 0 ? Math.round((value / total) * 100) : 0;
@@ -330,7 +330,7 @@ function RsvpSection() {
   const FILTERS = [
     { value: '',             label: 'All' },
     { value: 'Attending',    label: 'Attending' },
-    { value: 'NotAttending', label: 'Not Attending' },
+    { value: 'NotAttending', label: 'Not Going' },
     { value: 'Maybe',        label: 'Maybe' },
   ];
 
@@ -348,7 +348,7 @@ function RsvpSection() {
           {[
             { label: 'Total',         value: total,        color: T.primary },
             { label: 'Attending',     value: attending,    color: T.success },
-            { label: 'Not Attending', value: notAttending, color: T.danger  },
+            { label: 'Not Going', value: notAttending, color: T.danger  },
             { label: 'Maybe',         value: maybe,        color: T.amber   },
           ].map(({ label, value, color }) => (
             <div key={label} style={{ flex: '1 1 0', padding: '14px 16px', background: T.surface,
@@ -356,7 +356,7 @@ function RsvpSection() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 7 }}>
                 <div style={{ width: 7, height: 7, borderRadius: '50%', background: color, flexShrink: 0 }} aria-hidden="true" />
                 <p style={{ fontSize: 9, fontWeight: 700, color: T.faint, letterSpacing: '0.09em',
-                  textTransform: 'uppercase', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</p>
+                  textTransform: 'uppercase', margin: 0, lineHeight: 1.3 }}>{label}</p>
               </div>
               <p style={{ fontSize: 28, fontWeight: 700, color: T.fg, margin: 0, lineHeight: 1,
                 fontFamily: "'Cormorant Garamond',Georgia,serif" }}>{value ?? 0}</p>
@@ -845,62 +845,82 @@ function WeddingSettings() {
         </Card>
       </form>
 
-      {/* Floating save bar — appears when form is dirty */}
+      {/* Sticky save bar — inside scroll flow, sticks to bottom when reached */}
       <AnimatePresence>
         {isDirty && (
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 12 }}
-            transition={{ duration: 0.22, ease: [0.2, 0.8, 0.2, 1] }}
+            exit={{ opacity: 0, y: 6 }}
+            transition={{ duration: 0.2, ease: [0.2, 0.8, 0.2, 1] }}
             style={{
-              position: 'fixed',
-              bottom: 'calc(env(safe-area-inset-bottom, 0px) + 72px)',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              zIndex: 50,
+              position: 'sticky',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              zIndex: 20,
+              marginTop: 16,
+              padding: '12px 16px',
+              background: T.fg,
+              borderRadius: T.r,
+              boxShadow: '0 -2px 0 rgba(0,0,0,0.06), 0 4px 24px rgba(0,0,0,0.18)',
               display: 'flex',
               alignItems: 'center',
-              gap: 10,
-              padding: '10px 14px 10px 16px',
-              background: T.sidebar,
-              border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: 999,
-              boxShadow: '0 8px 32px rgba(0,0,0,0.28)',
-              backdropFilter: 'blur(12px)',
-              whiteSpace: 'nowrap',
+              justifyContent: 'space-between',
+              gap: 12,
+              flexWrap: 'wrap',
             }}
             role="status"
             aria-live="polite"
           >
-            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', fontFamily: "'Jost',sans-serif" }}>
-              You have unsaved changes
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {/* Amber dot indicator */}
+              <div style={{ width: 7, height: 7, borderRadius: '50%', background: T.amber, flexShrink: 0 }} aria-hidden="true" />
+              <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', fontFamily: "'Jost',sans-serif", fontWeight: 500 }}>
+                Unsaved changes
+              </span>
+              {msg   && <span style={{ fontSize: 12, color: '#86EFAC', fontWeight: 600 }}>{msg}</span>}
+              {error && <span style={{ fontSize: 12, color: '#FCA5A5', fontWeight: 600 }}>{error}</span>}
+            </div>
 
-            {/* Success/error inline */}
-            {msg   && <span style={{ fontSize: 12, color: '#86EFAC', fontWeight: 600 }}>{msg}</span>}
-            {error && <span style={{ fontSize: 12, color: '#FCA5A5', fontWeight: 600 }}>{error}</span>}
+            <div style={{ display: 'flex', gap: 8 }}>
+              {/* Discard */}
+              <button
+                type="button"
+                onClick={() => orig && setForm({ ...orig })}
+                disabled={saving}
+                style={{
+                  padding: '7px 14px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.15)',
+                  background: 'transparent', color: 'rgba(255,255,255,0.55)',
+                  fontSize: 12, fontWeight: 500, cursor: 'pointer',
+                  fontFamily: "'Jost',sans-serif",
+                }}
+              >
+                Discard
+              </button>
 
-            <button
-              type="button"
-              onClick={doSave}
-              disabled={saving}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 7,
-                padding: '7px 16px', borderRadius: 999, border: 'none',
-                background: saving ? 'rgba(255,255,255,0.18)' : T.primary,
-                color: '#fff', fontSize: 12, fontWeight: 600,
-                cursor: saving ? 'not-allowed' : 'pointer',
-                fontFamily: "'Jost',sans-serif",
-                transition: T.ease,
-                opacity: saving ? 0.7 : 1,
-              }}
-            >
-              {saving
-                ? <><Spin size={12} color="#fff" /> Saving…</>
-                : <><Save size={12} /> Save changes</>
-              }
-            </button>
+              {/* Save */}
+              <button
+                type="button"
+                onClick={doSave}
+                disabled={saving}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 7,
+                  padding: '7px 18px', borderRadius: 6, border: 'none',
+                  background: saving ? 'rgba(255,255,255,0.2)' : T.primary,
+                  color: '#fff', fontSize: 12, fontWeight: 600,
+                  cursor: saving ? 'not-allowed' : 'pointer',
+                  fontFamily: "'Jost',sans-serif",
+                  opacity: saving ? 0.7 : 1,
+                  transition: T.ease,
+                }}
+              >
+                {saving
+                  ? <><Spin size={12} color="#fff" /> Saving…</>
+                  : <><Save size={12} /> Save changes</>
+                }
+              </button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

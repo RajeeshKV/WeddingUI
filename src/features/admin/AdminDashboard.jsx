@@ -22,6 +22,7 @@ import {
   getPendingPhotos, getAllAdminPhotos,
   approvePhoto, rejectPhoto, deletePhoto, bulkApprovePhotos,
   updateWeddingConfig, changePassword, getAdminWeddingConfig,
+  getAdminRsvps,
 } from '../../services/api/admin.js';
 import { normalizePage } from '../../services/api/public.js';
 
@@ -263,87 +264,287 @@ function Overview() {
 // ─────────────────────────────────────────────────────────────────
 // RSVP
 // ─────────────────────────────────────────────────────────────────
+// Shared pagination
+// ─────────────────────────────────────────────────────────────────
+
+const PAGE_SIZE = 10;
+
+function usePaginate(items) {
+  const [page, setPage] = useState(1);
+  const totalPages = Math.ceil(items.length / PAGE_SIZE) || 1;
+  const safePage   = Math.min(page, totalPages);
+  const slice      = items.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  useEffect(() => { setPage(1); }, [items.length]); // eslint-disable-line
+  return { page: safePage, setPage, totalPages, slice, total: items.length };
+}
+
+function PaginationBar({ page, setPage, totalPages, total, label = 'records' }) {
+  if (totalPages <= 1) return null;
+  const start = Math.max(1, Math.min(page - 2, totalPages - 4));
+  const pills  = Array.from({ length: Math.min(totalPages, 5) }, (_, i) => start + i).filter(n => n <= totalPages);
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      flexWrap: 'wrap', gap: 8, marginTop: 14,
+      padding: '10px 14px', borderRadius: T.radius, background: T.surface, border: `1px solid ${T.border}` }}>
+      <span style={{ fontSize: 11, color: T.faint }}>
+        Page {page} of {totalPages}&nbsp;&nbsp;·&nbsp;&nbsp;{total} {label}
+      </span>
+      <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+        <Btn variant="ghost" size="sm" disabled={page <= 1}
+          onClick={() => setPage(p => Math.max(1, p - 1))}
+          style={{ padding: '6px 12px' }}>
+          Prev
+        </Btn>
+        {pills.map(n => (
+          <Btn key={n} size="sm"
+            variant={n === page ? 'primary' : 'ghost'}
+            style={{ padding: '6px 10px', minWidth: 32, justifyContent: 'center' }}
+            onClick={() => setPage(n)}>
+            {n}
+          </Btn>
+        ))}
+        <Btn variant="ghost" size="sm" disabled={page >= totalPages}
+          onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+          style={{ padding: '6px 12px' }}>
+          Next
+        </Btn>
+      </div>
+    </div>
+  );
+}
+
+// usePaginateSection is an alias for usePaginate — named separately for clarity at call sites
+const usePaginateSection = usePaginate;
+
+// ─────────────────────────────────────────────────────────────────
+// RSVP Section — paginated list + aggregate stats
+// ─────────────────────────────────────────────────────────────────
 
 function RsvpSection() {
-  const [stats,   setStats]   = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState('');
+  const [items,      setItems]      = useState([]);
+  const [stats,      setStats]      = useState(null);
+  const [loading,    setLoading]    = useState(true);
+  const [error,      setError]      = useState('');
+  const [filter,     setFilter]     = useState('');      // '' | Attending | NotAttending | Maybe | Pending
+  const [apiPage,    setApiPage]    = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
-  const load = useCallback(() => {
+  const PAGE = 10;
+
+  const load = useCallback(async (pg = apiPage, st = filter) => {
     setLoading(true); setError('');
-    getAdminDashboard()
-      .then(setStats)
-      .catch(e => setError(e.message || 'Failed to load RSVP data.'))
-      .finally(() => setLoading(false));
-  }, []);
+    try {
+      const [rsvpRes, statsRes] = await Promise.allSettled([
+        getAdminRsvps({ page: pg, pageSize: PAGE, ...(st ? { status: st } : {}) }),
+        getAdminDashboard(),
+      ]);
+      if (rsvpRes.status === 'fulfilled') {
+        const d = rsvpRes.value;
+        const rows = Array.isArray(d) ? d
+          : Array.isArray(d?.items) ? d.items : [];
+        setItems(rows);
+        setTotalCount(d?.totalCount ?? rows.length);
+        setTotalPages((d?.totalPages ?? Math.ceil((d?.totalCount ?? rows.length) / PAGE)) || 1);
+      } else {
+        setError(rsvpRes.reason?.message || 'Failed to load RSVPs.');
+      }
+      if (statsRes.status === 'fulfilled') setStats(statsRes.value);
+    } finally {
+      setLoading(false);
+    }
+  }, [apiPage, filter]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { load(apiPage, filter); }, [apiPage, filter]); // eslint-disable-line
 
-  if (loading) return <PageLoader />;
-  if (error)   return <ErrBox msg={error} onRetry={load} />;
-  if (!stats)  return null;
+  const handleFilter = (st) => { setFilter(st); setApiPage(1); };
+  const handlePage   = (pg) => { setApiPage(pg); };
 
-  const attending    = stats.attending    ?? stats.attendingCount    ?? 0;
-  const notAttending = stats.notAttending ?? stats.notAttendingCount ?? 0;
-  const maybe        = stats.maybe        ?? stats.maybeCount        ?? 0;
-  const total        = stats.totalRsvps   ?? 0;
+  const attending    = stats?.attending    ?? stats?.attendingCount    ?? 0;
+  const notAttending = stats?.notAttending ?? stats?.notAttendingCount ?? 0;
+  const maybe        = stats?.maybe        ?? stats?.maybeCount        ?? 0;
+  const total        = stats?.totalRsvps   ?? 0;
+
+  const STATUS_FILTERS = [
+    { value: '',             label: 'All' },
+    { value: 'Attending',    label: 'Attending' },
+    { value: 'NotAttending', label: 'Not Attending' },
+    { value: 'Maybe',        label: 'Maybe' },
+    { value: 'Pending',      label: 'Pending' },
+  ];
+
+  const STATUS_COLOR = {
+    Attending:    T.success,
+    NotAttending: T.danger,
+    Maybe:        T.warning,
+    Pending:      T.faint,
+  };
 
   return (
     <div>
       <SectionHeader title="RSVPs">
-        <Btn variant="ghost" size="sm" onClick={load}><RefreshCw size={13} /> Refresh</Btn>
+        <Btn variant="ghost" size="sm" onClick={() => load(apiPage, filter)}>
+          <RefreshCw size={13} /> Refresh
+        </Btn>
       </SectionHeader>
 
-      {/* Banner */}
-      <div style={{
-        background: 'linear-gradient(135deg,#1A1714,#2E2721)', color: '#F5F0EC',
-        borderRadius: T.radius, padding: '22px 24px', marginBottom: 16,
-      }}>
-        <p style={{ fontSize: 10, letterSpacing: '0.12em', color: '#C4A6B2',
-          fontWeight: 600, margin: '0 0 6px', textTransform: 'uppercase' }}>
-          Total RSVPs
-        </p>
-        <p style={{ fontSize: 48, fontWeight: 700, margin: 0, lineHeight: 1,
-          fontFamily: "'Cormorant Garamond',Georgia,serif" }}>
-          {total}
-        </p>
-      </div>
+      {/* Summary stats */}
+      {stats && (
+        <div className="ad-stat-grid" style={{ marginBottom: 20 }}>
+          {[
+            { label: 'Total',        value: total,        color: T.primary },
+            { label: 'Attending',    value: attending,    color: T.success },
+            { label: 'Not Attending',value: notAttending, color: T.danger  },
+            { label: 'Maybe',        value: maybe,        color: T.warning },
+          ].map(({ label, value, color }) => (
+            <Card key={label} p={16} style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div style={{ width: 10, height: 10, borderRadius: '50%', background: color, flexShrink: 0 }} aria-hidden="true" />
+              <div>
+                <p style={{ fontSize: 10, fontWeight: 600, color: T.faint, letterSpacing: '0.07em',
+                  textTransform: 'uppercase', margin: '0 0 3px' }}>{label}</p>
+                <p style={{ fontSize: 26, fontWeight: 700, color: T.fg, margin: 0, lineHeight: 1,
+                  fontFamily: "'Cormorant Garamond',Georgia,serif" }}>{value}</p>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
 
-      <div className="ad-stat-grid">
-        {[
-          { label: 'Attending',     value: attending,    color: T.success, bg: '#DCFCE7' },
-          { label: 'Not Attending', value: notAttending, color: T.danger,  bg: '#FEE2E2' },
-          { label: 'Maybe',         value: maybe,        color: T.warning, bg: '#FEF9C3' },
-        ].map(({ label, value, color, bg }) => (
-          <Card key={label} p={18}>
-            <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.07em',
-              textTransform: 'uppercase', color: T.faint, margin: '0 0 8px' }}>
-              {label}
-            </p>
-            <p style={{ fontSize: 36, fontWeight: 700, color: T.fg, margin: '0 0 10px', lineHeight: 1,
-              fontFamily: "'Cormorant Garamond',Georgia,serif" }}>
-              {value}
-            </p>
-            <div style={{ height: 4, background: T.border, borderRadius: 99, overflow: 'hidden' }}>
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${total > 0 ? (value / total) * 100 : 0}%` }}
-                transition={{ duration: 0.9, ease: [0.2, 0.8, 0.2, 1] }}
-                style={{ height: '100%', background: color, borderRadius: 99 }}
-              />
-            </div>
-            <p style={{ fontSize: 10, color, fontWeight: 600, margin: '6px 0 0' }}>
-              {total > 0 ? `${Math.round((value / total) * 100)}%` : '—'}
-            </p>
-          </Card>
+      {/* Filter tabs */}
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
+        {STATUS_FILTERS.map(({ value, label }) => (
+          <button key={value}
+            onClick={() => handleFilter(value)}
+            style={{
+              padding: '6px 14px', borderRadius: 999, fontSize: 11, fontWeight: 600,
+              cursor: 'pointer', fontFamily: "'Jost',sans-serif",
+              border: `1px solid ${filter === value ? T.primary : T.border}`,
+              background: filter === value ? T.primary : 'transparent',
+              color: filter === value ? T.primaryFg : T.muted,
+              transition: T.transition,
+            }}>
+            {label}
+          </button>
         ))}
       </div>
 
-      <Card style={{ padding: '14px 18px', marginTop: 14 }}>
-        <p style={{ fontSize: 12, color: T.faint, margin: 0, lineHeight: 1.6 }}>
-          The backend provides aggregate counts only. Individual RSVP records are not available in the current API version.
-        </p>
-      </Card>
+      {loading && <PageLoader />}
+      {!loading && error && <ErrBox msg={error} onRetry={() => load(apiPage, filter)} />}
+
+      {!loading && !error && items.length === 0 && (
+        <Card style={{ padding: '36px 20px', textAlign: 'center', background: T.bg }}>
+          <p style={{ color: T.faint, fontSize: 13, margin: 0 }}>
+            {filter ? `No ${filter} RSVPs found.` : 'No RSVPs yet.'}
+          </p>
+        </Card>
+      )}
+
+      {/* Grid */}
+      {!loading && !error && items.length > 0 && (
+        <>
+          {/* Desktop table */}
+          <div className="ad-rsvp-table-wrap">
+            <table className="ad-rsvp-table" aria-label="RSVP list">
+              <thead>
+                <tr>
+                  {['Guest', 'Status', 'Guests', 'Contact', 'Message', 'Submitted'].map(h => (
+                    <th key={h}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {items.map(r => (
+                  <tr key={r.id}>
+                    <td className="ad-rsvp-name">{r.guestName || '—'}</td>
+                    <td>
+                      <span style={{
+                        fontSize: 10, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase',
+                        color: STATUS_COLOR[r.status] || T.faint,
+                        background: `${STATUS_COLOR[r.status] || T.faint}14`,
+                        borderRadius: 99, padding: '3px 9px', whiteSpace: 'nowrap',
+                      }}>
+                        {r.status}
+                      </span>
+                    </td>
+                    <td style={{ textAlign: 'center' }}>{r.guestCount ?? 1}</td>
+                    <td className="ad-rsvp-contact">
+                      {r.email && <span>{r.email}</span>}
+                      {r.phone && <span>{r.phone}</span>}
+                      {!r.email && !r.phone && <span style={{ color: T.faint }}>—</span>}
+                    </td>
+                    <td className="ad-rsvp-msg">
+                      {r.message || <span style={{ color: T.faint }}>—</span>}
+                    </td>
+                    <td style={{ whiteSpace: 'nowrap', color: T.faint, fontSize: 11 }}>
+                      {new Date(r.submittedAtUtc).toLocaleDateString('en-IN', {
+                        day: 'numeric', month: 'short', year: 'numeric',
+                      })}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile cards */}
+          <div className="ad-rsvp-cards">
+            {items.map(r => (
+              <Card key={r.id} p={16} style={{ marginBottom: 10 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                  <p style={{ fontSize: 14, fontWeight: 600, color: T.fg, margin: 0 }}>{r.guestName || '—'}</p>
+                  <span style={{
+                    fontSize: 10, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase',
+                    color: STATUS_COLOR[r.status] || T.faint,
+                    background: `${STATUS_COLOR[r.status] || T.faint}14`,
+                    borderRadius: 99, padding: '3px 9px', flexShrink: 0,
+                  }}>
+                    {r.status}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: 12, color: T.muted }}>
+                  <span>{r.guestCount ?? 1} guest{(r.guestCount ?? 1) !== 1 ? 's' : ''}</span>
+                  {r.email && <span>{r.email}</span>}
+                  {r.phone && <span>{r.phone}</span>}
+                </div>
+                {r.message && (
+                  <p style={{ fontSize: 12, color: T.muted, margin: '8px 0 0', fontStyle: 'italic',
+                    lineHeight: 1.5, borderTop: `1px solid ${T.border}`, paddingTop: 8 }}>
+                    {r.message}
+                  </p>
+                )}
+                <p style={{ fontSize: 10, color: T.faint, margin: '8px 0 0' }}>
+                  {new Date(r.submittedAtUtc).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                </p>
+              </Card>
+            ))}
+          </div>
+
+          {/* API-driven pagination */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            flexWrap: 'wrap', gap: 8, marginTop: 14,
+            padding: '10px 14px', borderRadius: T.radius, background: T.surface, border: `1px solid ${T.border}` }}>
+            <span style={{ fontSize: 11, color: T.faint }}>
+              Page {apiPage} of {totalPages}&nbsp;&nbsp;·&nbsp;&nbsp;{totalCount} RSVPs
+            </span>
+            <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+              <Btn variant="ghost" size="sm" disabled={apiPage <= 1 || loading}
+                onClick={() => handlePage(apiPage - 1)} style={{ padding: '6px 12px' }}>Prev</Btn>
+              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                const start = Math.max(1, Math.min(apiPage - 2, totalPages - 4));
+                const n = start + i;
+                return n <= totalPages ? (
+                  <Btn key={n} size="sm"
+                    variant={n === apiPage ? 'primary' : 'ghost'}
+                    style={{ padding: '6px 10px', minWidth: 32, justifyContent: 'center' }}
+                    onClick={() => handlePage(n)}>{n}</Btn>
+                ) : null;
+              })}
+              <Btn variant="ghost" size="sm" disabled={apiPage >= totalPages || loading}
+                onClick={() => handlePage(apiPage + 1)} style={{ padding: '6px 12px' }}>Next</Btn>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -532,6 +733,11 @@ function PhotoModeration() {
   const approved = all.filter(p => p.status === 'Approved');
   const rejected  = all.filter(p => p.status === 'Rejected');
 
+  // Client-side pagination per section
+  const pendingPag  = usePaginateSection(pending);
+  const approvedPag = usePaginateSection(approved);
+  const rejectedPag = usePaginateSection(rejected);
+
   const SectionDot = ({ color, label, count }) => (
     <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 14 }}>
       <div style={{ width: 9, height: 9, borderRadius: '50%', background: color, flexShrink: 0 }} aria-hidden="true" />
@@ -594,18 +800,22 @@ function PhotoModeration() {
         </div>
         {pending.length === 0
           ? <EmptyState msg="No photos awaiting approval." />
-          : <div className="ad-photo-grid">
-              {pending.map(p => (
-                <PhotoCard key={p.id} photo={p}
-                  selectable selected={selected.has(p.id)} onToggle={() => {
-                    setSelected(prev => { const n = new Set(prev); n.has(p.id) ? n.delete(p.id) : n.add(p.id); return n; });
-                  }}
-                  onApprove={id => act(() => approvePhoto(id), 'Photo approved.')}
-                  onReject={id  => act(() => rejectPhoto(id),  'Photo rejected.')}
-                  onDelete={id  => act(() => deletePhoto(id),  'Photo deleted.')}
-                  onPreview={setPreview} busy={busy} />
-              ))}
-            </div>
+          : <>
+              <div className="ad-photo-grid">
+                {pendingPag.slice.map(p => (
+                  <PhotoCard key={p.id} photo={p}
+                    selectable selected={selected.has(p.id)} onToggle={() => {
+                      setSelected(prev => { const n = new Set(prev); n.has(p.id) ? n.delete(p.id) : n.add(p.id); return n; });
+                    }}
+                    onApprove={id => act(() => approvePhoto(id), 'Photo approved.')}
+                    onReject={id  => act(() => rejectPhoto(id),  'Photo rejected.')}
+                    onDelete={id  => act(() => deletePhoto(id),  'Photo deleted.')}
+                    onPreview={setPreview} busy={busy} />
+                ))}
+              </div>
+              <PaginationBar page={pendingPag.page} setPage={pendingPag.setPage}
+                totalPages={pendingPag.totalPages} total={pendingPag.total} label="pending photos" />
+            </>
         }
       </section>
 
@@ -614,14 +824,18 @@ function PhotoModeration() {
         <SectionDot color={T.success} label="Approved" count={approved.length} />
         {approved.length === 0
           ? <EmptyState msg="No approved photos yet." />
-          : <div className="ad-photo-grid">
-              {approved.map(p => (
-                <PhotoCard key={p.id} photo={p}
-                  onReject={id => act(() => rejectPhoto(id), 'Moved to rejected.')}
-                  onDelete={id => act(() => deletePhoto(id), 'Photo deleted.')}
-                  onPreview={setPreview} busy={busy} />
-              ))}
-            </div>
+          : <>
+              <div className="ad-photo-grid">
+                {approvedPag.slice.map(p => (
+                  <PhotoCard key={p.id} photo={p}
+                    onReject={id => act(() => rejectPhoto(id), 'Moved to rejected.')}
+                    onDelete={id => act(() => deletePhoto(id), 'Photo deleted.')}
+                    onPreview={setPreview} busy={busy} />
+                ))}
+              </div>
+              <PaginationBar page={approvedPag.page} setPage={approvedPag.setPage}
+                totalPages={approvedPag.totalPages} total={approvedPag.total} label="approved photos" />
+            </>
         }
       </section>
 
@@ -630,13 +844,15 @@ function PhotoModeration() {
         <section aria-label="Rejected photos">
           <SectionDot color={T.danger} label="Rejected" count={rejected.length} />
           <div className="ad-photo-grid">
-            {rejected.map(p => (
+            {rejectedPag.slice.map(p => (
               <PhotoCard key={p.id} photo={p}
                 onApprove={id => act(() => approvePhoto(id), 'Photo approved.')}
                 onDelete={id  => act(() => deletePhoto(id),  'Photo deleted.')}
                 onPreview={setPreview} busy={busy} />
             ))}
           </div>
+          <PaginationBar page={rejectedPag.page} setPage={rejectedPag.setPage}
+            totalPages={rejectedPag.totalPages} total={rejectedPag.total} label="rejected photos" />
         </section>
       )}
 
@@ -1132,6 +1348,69 @@ export function AdminDashboard({ me, mustChange, onMustChangeResolved, onLogout,
           margin-bottom: 14px;
         }
 
+        /* ── RSVP table ── */
+        .ad-rsvp-table-wrap {
+          overflow-x: auto;
+          border-radius: ${T.radius}px;
+          border: 1px solid ${T.border};
+          background: ${T.surface};
+        }
+
+        .ad-rsvp-table {
+          width: 100%;
+          border-collapse: collapse;
+          font-size: 13px;
+          font-family: 'Jost', sans-serif;
+        }
+
+        .ad-rsvp-table thead tr {
+          background: ${T.bg};
+          border-bottom: 1px solid ${T.border};
+        }
+
+        .ad-rsvp-table th {
+          padding: 11px 14px;
+          text-align: left;
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: ${T.faint};
+          white-space: nowrap;
+        }
+
+        .ad-rsvp-table td {
+          padding: 12px 14px;
+          color: ${T.fg};
+          vertical-align: top;
+          border-bottom: 1px solid ${T.border};
+          line-height: 1.4;
+        }
+
+        .ad-rsvp-table tbody tr:last-child td { border-bottom: none; }
+
+        .ad-rsvp-table tbody tr:hover td { background: ${T.bg}; }
+
+        .ad-rsvp-name { font-weight: 600; }
+
+        .ad-rsvp-contact {
+          display: flex;
+          flex-direction: column;
+          gap: 3px;
+          font-size: 12px;
+          color: ${T.muted};
+        }
+
+        .ad-rsvp-msg {
+          font-size: 12px;
+          color: ${T.muted};
+          max-width: 200px;
+          line-height: 1.5;
+        }
+
+        /* Mobile RSVP cards — hidden on desktop */
+        .ad-rsvp-cards { display: none; }
+
         /* ── Form fields ── */
         .ad-field {
           display: flex;
@@ -1207,6 +1486,10 @@ export function AdminDashboard({ me, mustChange, onMustChangeResolved, onLogout,
           .ad-form-grid {
             grid-template-columns: 1fr;
           }
+
+          /* On mobile: hide table, show cards */
+          .ad-rsvp-table-wrap { display: none; }
+          .ad-rsvp-cards      { display: block; }
         }
 
         @media (max-width: 400px) {

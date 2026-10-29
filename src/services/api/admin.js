@@ -126,3 +126,14 @@ export function deletePhoto(photoId) {
 export function bulkApprovePhotos(photoIds) {
   return api.post(base('/photos/bulk-approve'), photoIds, { role: ROLE });
 }
+
+// ── RSVP listing (paginated) ──────────────────────────────────────
+// GET /api/v1/admin/wedding/rsvps
+// Params: { page, pageSize, status? }
+// Returns: { items: AdminRsvpDto[], totalPages, totalCount }
+export function getAdminRsvps({ page = 1, pageSize = 50, status } = {}) {
+  return api.get(base('/wedding/rsvps'), {
+    role: ROLE,
+    params: { page, pageSize, ...(status ? { status } : {}) },
+  });
+}

@@ -621,12 +621,38 @@ function PhotoModeration() {
     </Card>
   );
 
+  // Helper to toggle a set of ids (select all in a section or deselect)
+  const toggleSection = (photos) => {
+    const ids = photos.map(p => p.id);
+    const allSelected = ids.every(id => selected.has(id));
+    setSelected(prev => {
+      const n = new Set(prev);
+      if (allSelected) ids.forEach(id => n.delete(id));
+      else ids.forEach(id => n.add(id));
+      return n;
+    });
+  };
+
+  const toggleOne = (id) => setSelected(prev => {
+    const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n;
+  });
+
+  // Mass action bar — shown when any photo is selected
+  const selectedPhotos = [...selected];
+  const selectedStatuses = selectedPhotos.map(id => {
+    const p = [...pending, ...approved, ...rejected].find(x => x.id === id);
+    return p?.status;
+  });
+  const canApprove = selectedStatuses.some(s => s !== 'Approved');
+  const canReject  = selectedStatuses.some(s => s !== 'Rejected');
+
   return (
     <div>
       <SectionHeader title="Photos">
         <Btn size="sm" onClick={load} disabled={busy}><RefreshCw size={12} /> Refresh</Btn>
       </SectionHeader>
 
+      {/* Toast */}
       <AnimatePresence>
         {toast && (
           <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
@@ -639,24 +665,81 @@ function PhotoModeration() {
         )}
       </AnimatePresence>
 
-      {/* Pending */}
+      {/* ── Global mass-action bar ── */}
+      <AnimatePresence>
+        {selectedPhotos.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.18 }}
+            style={{
+              position: 'sticky', top: 0, zIndex: 20, marginBottom: 16,
+              padding: '10px 14px', borderRadius: T.r,
+              background: T.fg, color: T.sidebarFg,
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              gap: 10, flexWrap: 'wrap',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+            }}
+            role="toolbar" aria-label={`${selectedPhotos.length} photo(s) selected`}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.85)' }}>
+                {selectedPhotos.length} selected
+              </span>
+              <button onClick={() => setSelected(new Set())}
+                style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', background: 'none',
+                  border: 'none', cursor: 'pointer', padding: '2px 6px' }}>
+                Clear
+              </button>
+            </div>
+            <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap' }}>
+              {canApprove && (
+                <Btn variant="success" size="sm" disabled={busy}
+                  onClick={() => act(
+                    () => bulkApprovePhotos(selectedPhotos.filter(id =>
+                      [...pending, ...rejected].find(p => p.id === id)
+                    )),
+                    `${selectedPhotos.length} approved.`
+                  )}>
+                  <Check size={12} /> Approve all
+                </Btn>
+              )}
+              {canReject && (
+                <Btn variant="amber" size="sm" disabled={busy}
+                  onClick={() => act(
+                    async () => {
+                      for (const id of selectedPhotos) {
+                        const p = [...pending, ...approved, ...rejected].find(x => x.id === id);
+                        if (p && p.status !== 'Rejected') await rejectPhoto(id);
+                      }
+                    },
+                    `${selectedPhotos.length} rejected.`
+                  )}>
+                  <X size={12} /> Reject all
+                </Btn>
+              )}
+              <Btn variant="danger" size="sm" disabled={busy}
+                onClick={() => act(
+                  async () => {
+                    for (const id of selectedPhotos) await deletePhoto(id);
+                  },
+                  `${selectedPhotos.length} deleted.`
+                )}>
+                <Trash2 size={12} /> Delete all
+              </Btn>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Pending ── */}
       <section style={{ marginBottom: 36 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           flexWrap: 'wrap', gap: 10, marginBottom: 12 }}>
           <SectionLabel color={T.amber} label="Pending Approval" count={pending.length} />
           {pending.length > 0 && (
-            <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap' }}>
-              <Btn size="sm" onClick={() => setSelected(prev =>
-                prev.size === pending.length ? new Set() : new Set(pending.map(p => p.id)))}>
-                {selected.size === pending.length ? 'Deselect all' : 'Select all'}
-              </Btn>
-              {selected.size > 0 && (
-                <Btn variant="success" size="sm" disabled={busy}
-                  onClick={() => act(() => bulkApprovePhotos([...selected]), `${selected.size} approved.`)}>
-                  <Check size={12} /> Approve {selected.size}
-                </Btn>
-              )}
-            </div>
+            <Btn size="sm" onClick={() => toggleSection(pending)}>
+              {pending.every(p => selected.has(p.id)) ? 'Deselect all' : 'Select all'}
+            </Btn>
           )}
         </div>
         {pending.length === 0
@@ -664,8 +747,8 @@ function PhotoModeration() {
           : <>
               <div className="ad-photo-grid">
                 {pendingPag.slice.map(p => (
-                  <PhotoCard key={p.id} photo={p} selectable selected={selected.has(p.id)}
-                    onToggle={() => setSelected(prev => { const n = new Set(prev); n.has(p.id) ? n.delete(p.id) : n.add(p.id); return n; })}
+                  <PhotoCard key={p.id} photo={p}
+                    selectable selected={selected.has(p.id)} onToggle={() => toggleOne(p.id)}
                     onApprove={id => act(() => approvePhoto(id), 'Photo approved.')}
                     onReject={id  => act(() => rejectPhoto(id),  'Photo rejected.')}
                     onDelete={id  => act(() => deletePhoto(id),  'Photo deleted.')}
@@ -677,15 +760,24 @@ function PhotoModeration() {
         }
       </section>
 
-      {/* Approved */}
+      {/* ── Approved ── */}
       <section style={{ marginBottom: 36 }}>
-        <SectionLabel color={T.success} label="Approved" count={approved.length} />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          flexWrap: 'wrap', gap: 10, marginBottom: 12 }}>
+          <SectionLabel color={T.success} label="Approved" count={approved.length} />
+          {approved.length > 0 && (
+            <Btn size="sm" onClick={() => toggleSection(approved)}>
+              {approved.every(p => selected.has(p.id)) ? 'Deselect all' : 'Select all'}
+            </Btn>
+          )}
+        </div>
         {approved.length === 0
           ? <Empty msg="No approved photos yet." />
           : <>
               <div className="ad-photo-grid">
                 {approvedPag.slice.map(p => (
                   <PhotoCard key={p.id} photo={p}
+                    selectable selected={selected.has(p.id)} onToggle={() => toggleOne(p.id)}
                     onReject={id => act(() => rejectPhoto(id), 'Moved to rejected.')}
                     onDelete={id => act(() => deletePhoto(id), 'Photo deleted.')}
                     onPreview={setPreview} busy={busy} />
@@ -696,13 +788,20 @@ function PhotoModeration() {
         }
       </section>
 
-      {/* Rejected */}
+      {/* ── Rejected ── */}
       {rejected.length > 0 && (
         <section>
-          <SectionLabel color={T.danger} label="Rejected" count={rejected.length} />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            flexWrap: 'wrap', gap: 10, marginBottom: 12 }}>
+            <SectionLabel color={T.danger} label="Rejected" count={rejected.length} />
+            <Btn size="sm" onClick={() => toggleSection(rejected)}>
+              {rejected.every(p => selected.has(p.id)) ? 'Deselect all' : 'Select all'}
+            </Btn>
+          </div>
           <div className="ad-photo-grid">
             {rejectedPag.slice.map(p => (
               <PhotoCard key={p.id} photo={p}
+                selectable selected={selected.has(p.id)} onToggle={() => toggleOne(p.id)}
                 onApprove={id => act(() => approvePhoto(id), 'Photo approved.')}
                 onDelete={id  => act(() => deletePhoto(id),  'Photo deleted.')}
                 onPreview={setPreview} busy={busy} />

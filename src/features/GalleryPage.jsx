@@ -338,7 +338,7 @@ export function GalleryPage() {
       <main style={{ maxWidth: 1400, margin: '0 auto', padding: 'clamp(24px,4vw,48px) clamp(12px,3vw,32px) 80px' }}>
 
         <div style={{ maxWidth: 680, margin: '0 auto 28px' }}>
-          <GuestPhotoUpload weddingConfig={config} onUploaded={() => load()} />
+          <GuestPhotoUpload weddingConfig={config} onUploaded={() => load()} compact />
         </div>
 
         {/* Loading state */}

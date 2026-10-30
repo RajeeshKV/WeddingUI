@@ -1526,8 +1526,21 @@ h1 em, h2 em, h3 em {
   /* ── Story ── */
   .story-grid {
     grid-template-columns: 1fr;
-    row-gap: 20px;
+    row-gap: 24px;
   }
+
+  .story-mosaic--left,
+  .story-mosaic {
+    grid-column: 1;
+    grid-row: 1;
+    width: 100%;
+    margin: 0;
+    aspect-ratio: 1.1;
+    gap: 7px;
+    padding: 0;
+  }
+
+  .timeline { grid-column: 1; grid-row: 2; }
 
   .story-photo--small {
     grid-column: 1;
@@ -1878,8 +1891,39 @@ h1 em, h2 em, h3 em {
 @media(max-width:600px){.site .nav-logo-initials{font-size:40px}.site-nav--scrolled .nav-logo-initials{font-size:32px}.site .nav-logo-ornament>span:first-child,.site .nav-logo-ornament>span:last-child{width:21px}}
 
 /* Story photos form a replaceable four-image shattered collage. */
-.story-mosaic{grid-column:2;width:min(100%,500px);justify-self:end;align-self:start;display:grid;grid-template-columns:1.08fr .92fr;grid-template-rows:1fr 1fr;gap:10px;aspect-ratio:1.25;margin:-24px 0 0;padding:10px;background:color-mix(in srgb,var(--t-surface-hi) 72%,transparent);box-shadow:0 20px 50px color-mix(in srgb,var(--t-fg) 12%,transparent)}
-.story-mosaic__tile{min-width:0;min-height:0;overflow:hidden;background:var(--t-accent-soft);box-shadow:0 8px 20px rgba(30,20,24,.12)}
+/* mosaic--left: column 1 of story-grid, full height, no bg/border */
+.story-mosaic--left {
+  grid-column: 1;
+  grid-row: 1;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1.08fr 0.92fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 10px;
+  aspect-ratio: 0.9;
+  margin: 0;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  border: none;
+}
+
+/* Keep the old .story-mosaic class working for themes that still reference it */
+.story-mosaic {
+  grid-column: 1;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1.08fr 0.92fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 10px;
+  aspect-ratio: 0.9;
+  margin: 0;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  border: none;
+}
+.story-mosaic__tile{min-width:0;min-height:0;overflow:hidden;background:var(--t-accent-soft);}
 .story-mosaic__tile img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .7s cubic-bezier(.2,.8,.2,1)}
 .story-mosaic__tile:hover img{transform:scale(1.045)}
 .story-mosaic__tile--1{clip-path:polygon(0 4%,94% 0,100% 92%,8% 100%)}
@@ -1902,7 +1946,7 @@ h1 em, h2 em, h3 em {
 .theme-eternal-bloom .story{background:linear-gradient(145deg,#f2e7ed 0%,#e9dce7 100%)}
 .theme-eternal-bloom .story-photo--large img{border-radius:210px 210px 3px 3px;box-shadow:0 24px 50px rgba(73,42,61,.16)}
 .theme-eternal-bloom .story-photo--small img{border-radius:140px 140px 3px 3px;box-shadow:0 18px 36px rgba(73,42,61,.14)}
-.theme-eternal-bloom .story-mosaic{border-radius:36px 3px 36px 3px;box-shadow:0 24px 52px rgba(73,42,61,.15)}
+.theme-eternal-bloom .story-mosaic{border-radius:36px 3px 36px 3px}
 .theme-eternal-bloom .timeline-item{position:relative;border-bottom-color:rgba(116,78,98,.14)}
 .theme-eternal-bloom .events{background:linear-gradient(180deg,#fbf6f6,#f5e9ec)}
 .theme-eternal-bloom .event-grid{gap:clamp(16px,2.2vw,28px)}
@@ -1929,7 +1973,7 @@ h1 em, h2 em, h3 em {
 .theme-eternal-bloom .site-footer{background:radial-gradient(ellipse at 50% 0%,#69475b,#432d40 68%);border-top:1px solid rgba(239,212,218,.25)}
 .theme-eternal-bloom .site-footer h2 em{color:#e4b5c1}
 @media(max-width:760px){.theme-eternal-bloom .event-card{border-radius:120px 120px 4px 4px}.theme-eternal-bloom .event-img-wrap{height:250px;border-radius:120px 120px 0 0}.theme-eternal-bloom .gallery-item,.theme-eternal-bloom .gallery-item:nth-child(2n){border-radius:40px 40px 3px 3px}.theme-eternal-bloom .travel-card{gap:0}.theme-eternal-bloom .travel-text{border-radius:3px 54px 3px 3px}.theme-eternal-bloom .travel-img-wrap,.theme-eternal-bloom .travel-img-wrap::after{border-radius:130px 130px 3px 3px;min-height:360px}}
-@media(max-width:760px){.story-mosaic{grid-column:1;width:100%;max-width:540px;justify-self:center;margin:4px 0 0;aspect-ratio:1.16;gap:7px;padding:7px}.site .welcome .signature-couple{max-width:min(92vw,520px)}.invite-composition .invite-names{font-size:clamp(31px,8.6vw,44px)}}
+@media(max-width:760px){.story-mosaic,.story-mosaic--left{grid-column:1;width:100%;max-width:540px;justify-self:center;margin:0;aspect-ratio:1.1;gap:7px;padding:0}.site .welcome .signature-couple{max-width:min(92vw,520px)}.invite-composition .invite-names{font-size:clamp(31px,8.6vw,44px)}}
 @media(max-width:600px){.invite-composition .invite-open{min-width:min(260px,calc(100vw - 40px));max-width:calc(100vw - 40px);gap:16px;padding-inline:20px}}
 
 /* Eternal Bloom intro — floral editorial art direction */

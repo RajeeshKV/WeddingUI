@@ -2,30 +2,33 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { AmbientCanvas } from '../components/background/AmbientCanvas.jsx';
 
-const storyPhoto  = 'https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=1100&q=85';
 const STORY_MOSAIC_FALLBACKS = [
-  { imageUrl: storyPhoto, alt: 'A couple sharing a quiet moment together' },
-  { imageUrl: 'https://images.unsplash.com/photo-1537633552985-df8429e8048b?auto=format&fit=crop&w=1000&q=85', alt: 'A wedding day portrait by the sea' },
+  { imageUrl: 'https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=1100&q=85', alt: 'A couple sharing a quiet moment together' },
+  { imageUrl: 'https://images.unsplash.com/photo-1537633552985-df8429e8048b?auto=format&fit=crop&w=1000&q=85', alt: 'A wedding day portrait' },
   { imageUrl: 'https://images.unsplash.com/photo-1519225421980-888cb7e6c7c2?auto=format&fit=crop&w=900&q=85', alt: 'A wedding celebration detail' },
   { imageUrl: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=900&q=85', alt: 'A joyful wedding moment' },
 ];
 
-// Timeline dates and content are editorial copy — not derived from API
 const TIMELINE = [
-  { n: '01', date: 'THE BEGINNING',      title: 'The first hello',     body: 'A chance meeting, a long conversation, and a feeling we could not quite explain.' },
-  { n: '02', date: 'OUR FIRST ADVENTURE',title: 'Something new',       body: 'New places, terrible directions, and memories we still talk about.' },
-  { n: '03', date: 'A QUIET EVENING',    title: 'The big question',    body: 'One little question. One very happy yes.' },
-  { n: '04', date: 'VERY SOON',          title: 'Our forever',         body: 'And now, the best part begins — with all of you.' },
+  { n: '01', date: 'THE BEGINNING',       title: 'The first hello',   body: 'A chance meeting, a long conversation, and a feeling we could not quite explain.' },
+  { n: '02', date: 'OUR FIRST ADVENTURE', title: 'Something new',     body: 'New places, terrible directions, and memories we still talk about.' },
+  { n: '03', date: 'A QUIET EVENING',     title: 'The big question',  body: 'One little question. One very happy yes.' },
+  { n: '04', date: 'VERY SOON',           title: 'Our forever',       body: 'And now, the best part begins — with all of you.' },
 ];
 
 export function Story({ photos = [] }) {
-  const uploadedPhotos = photos.slice(0, 4).map((photo, index) => ({
-        imageUrl: photo.thumbnailUrl || photo.imageUrl,
-        alt: photo.caption || (photo.uploadedByName ? `A wedding memory shared by ${photo.uploadedByName}` : `Wedding memory ${index + 1}`),
-      })).filter(photo => photo.imageUrl);
+  // Prefer uploaded photos, fall back to editorial images
+  const uploaded = photos
+    .slice(0, 4)
+    .map((p, i) => ({
+      imageUrl: p.thumbnailUrl || p.imageUrl,
+      alt: p.caption || (p.uploadedByName ? `Shared by ${p.uploadedByName}` : `Wedding memory ${i + 1}`),
+    }))
+    .filter(p => p.imageUrl);
+
   const mosaicPhotos = [
-    ...uploadedPhotos,
-    ...STORY_MOSAIC_FALLBACKS.filter(fallback => !uploadedPhotos.some(photo => photo.imageUrl === fallback.imageUrl)),
+    ...uploaded,
+    ...STORY_MOSAIC_FALLBACKS.filter(f => !uploaded.some(u => u.imageUrl === f.imageUrl)),
   ].slice(0, 4);
 
   return (
@@ -66,18 +69,29 @@ export function Story({ photos = [] }) {
         </motion.p>
       </div>
 
-      <div className="story-grid" style={{ position: 'relative', zIndex: 1 }}>
+      {/* Two-column: mosaic LEFT, timeline RIGHT */}
+      <div className="story-grid story-grid--mosaic-left" style={{ position: 'relative', zIndex: 1 }}>
+
+        {/* LEFT — shattered mosaic */}
         <motion.figure
-          className="story-photo story-photo--large"
-          initial={{ opacity: 0, x: -32, filter: 'blur(8px)' }}
+          className="story-mosaic story-mosaic--left"
+          aria-label="A collection of wedding memories"
+          initial={{ opacity: 0, x: -28, filter: 'blur(8px)' }}
           whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.95, ease: [0.2, 0.8, 0.2, 1] }}
         >
-          <img src={storyPhoto} alt="The couple at the beginning of their journey" loading="lazy" />
-          <figcaption>Somewhere, it all began.</figcaption>
+          {mosaicPhotos.map((photo, index) => (
+            <div
+              className={`story-mosaic__tile story-mosaic__tile--${index + 1}`}
+              key={`${photo.imageUrl}-${index}`}
+            >
+              <img src={photo.imageUrl} alt={photo.alt} loading="lazy" />
+            </div>
+          ))}
         </motion.figure>
 
+        {/* RIGHT — timeline only */}
         <div className="timeline" role="list" aria-label="Love story timeline">
           {TIMELINE.map((item, i) => (
             <motion.div
@@ -99,19 +113,6 @@ export function Story({ photos = [] }) {
           ))}
         </div>
 
-        <motion.figure
-          className="story-mosaic"
-          initial={{ opacity: 0, y: 28, filter: 'blur(6px)' }}
-          whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-          viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.85, ease: [0.2, 0.8, 0.2, 1] }}
-        >
-          {mosaicPhotos.map((photo, index) => (
-            <div className={`story-mosaic__tile story-mosaic__tile--${index + 1}`} key={`${photo.imageUrl}-${index}`}>
-              <img src={photo.imageUrl} alt={photo.alt} loading="lazy" />
-            </div>
-          ))}
-        </motion.figure>
       </div>
     </section>
   );

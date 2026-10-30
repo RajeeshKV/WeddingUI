@@ -137,7 +137,7 @@ const SectionHeader = ({ title, sub, children }) => (
 );
 
 // ── Pagination (client-side) ────────────────────────────────────
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 16;
 
 // Plain hook — MUST always be called, never conditionally
 function usePagedSlice(items) {
@@ -272,7 +272,7 @@ function RsvpSection() {
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
 
-  const PAGE = 10;
+  const PAGE = 16;
 
   const load = useCallback(async (pg, st) => {
     setLoading(true); setError('');
